@@ -47,10 +47,10 @@ function Price({ price, locale }: { price?: number; locale: Locale }) {
 
 function MenuItem({ item, locale }: { item: Item; locale: Locale }) {
   return (
-    <li className="flex gap-3 py-2.5">
+    <li className="flex gap-3 py-3">
       {/* pictogram: same hand-drawn line style as the poster doodles */}
       <span className="mt-px shrink-0 text-white/45" aria-hidden>
-        <ItemIcon name={item.icon} className="h-[19px] w-[19px]" />
+        <ItemIcon name={item.icon} className="h-[25px] w-[25px]" />
       </span>
 
       <div className="flex min-w-0 flex-1 items-baseline gap-2">
