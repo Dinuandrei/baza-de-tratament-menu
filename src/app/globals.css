@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #08080b;
+  --color-surface: #101018;
+  --color-surface-2: #17171f;
+  --color-line: #262633;
+  --color-brand: #ff7a00;
+  --color-brand-soft: #ffa14d;
+  --color-muted: #a2a2b0;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+    scroll-padding-top: 9rem;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-brand);
+    color: #000;
+  }
+
+  /* Fitts's Law / accessibility: an always-visible focus ring, never clipped. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+/* Poster-style background: soft orange glow + faint dot grid. */
+.poster-bg {
+  background-image:
+    radial-gradient(1100px 620px at 50% -18%, rgba(255, 122, 0, 0.22), transparent 62%),
+    radial-gradient(760px 460px at 108% 108%, rgba(255, 122, 0, 0.1), transparent 60%),
+    radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 0);
+  background-size: auto, auto, 22px 22px;
+}
+
+/* The rotated sticker pill from the poster. */
+.sticker {
+  border: 3px solid #fff;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 3px #000,
+    0 14px 34px -12px rgba(255, 122, 0, 0.55);
+  transform: rotate(-1.6deg);
+}
+
+.sticker:hover {
+  transform: rotate(0deg) scale(1.015);
+  transition: transform 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .sticker {
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Hide scrollbars on the horizontal category rail. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

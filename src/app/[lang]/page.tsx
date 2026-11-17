@@ -1,0 +1,104 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { CategoryNav } from "@/components/CategoryNav";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { Logo } from "@/components/Logo";
+import { MenuList } from "@/components/MenuList";
+import { ScrollProgress } from "@/components/ScrollProgress";
+import { categories } from "@/data/menu";
+import { isLocale, localeLabels, locales, t } from "@/lib/i18n";
+
+export const dynamicParams = false;
+
+export function generateStaticParams() {
+  return locales.map((lang) => ({ lang }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLocale(lang)) return {};
+
+  const titles: Record<string, string> = {
+    ro: "#baza_de_tratament — meniu",
+    en: "#baza_de_tratament — menu",
+    de: "#baza_de_tratament — Karte",
+    fr: "#baza_de_tratament — carte",
+  };
+
+  return {
+    title: titles[lang],
+    alternates: {
+      canonical: `/${lang}`,
+      languages: Object.fromEntries(locales.map((l) => [l, `/${l}`])),
+    },
+    openGraph: {
+      title: titles[lang],
+      description: t.pricesNote[lang],
+      locale: lang,
+    },
+  };
+}
+
+export default async function MenuPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  if (!isLocale(lang)) notFound();
+
+  return (
+    <div className="poster-bg min-h-dvh">
+      {/* Paradox of the Active User: no manual, no onboarding — jump straight to the list. */}
+      <a
+        href="#meniu"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-brand focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-ink"
+      >
+        {t.menu[lang]}
+      </a>
+
+      <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/85 backdrop-blur-md">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+          <Link href="/" aria-label={t.back[lang]} title={localeLabels[lang]}>
+            <Logo />
+          </Link>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-muted sm:block">
+              {t.language[lang]}
+            </span>
+            <LanguageSwitcher current={lang} />
+          </div>
+        </div>
+        <div className="mx-auto max-w-3xl px-4 pb-2.5">
+          <CategoryNav categories={categories} locale={lang} />
+        </div>
+        <ScrollProgress />
+      </header>
+
+      <main id="meniu" className="mx-auto max-w-3xl px-4 pb-16 pt-6">
+        <div className="mb-5 flex items-baseline justify-between gap-3">
+          <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
+            {t.menu[lang]}
+          </h1>
+          <Link
+            href="/"
+            className="shrink-0 rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted transition-colors hover:border-brand/60 hover:text-white"
+          >
+            {t.back[lang]}
+          </Link>
+        </div>
+
+        <MenuList categories={categories} locale={lang} />
+
+        <footer className="mt-10 flex flex-col items-center gap-3 border-t border-line pt-6 text-center">
+          <Logo />
+          <p className="max-w-xs text-[11px] leading-relaxed text-muted">{t.pricesNote[lang]}</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-muted/50">
+            {locales.map((l) => `/${l}`).join(" · ")}
+          </p>
+        </footer>
+      </main>
+    </div>
+  );
+}
