@@ -7,7 +7,7 @@ Built with Next.js (App Router, static export of every locale), React 19 and Tai
 
 | Route | What it is |
 | --- | --- |
-| `/` | Language picker (mirrors the printed poster) |
+| `/` | Language picker — an iOS-style wheel (mirrors the printed poster) |
 | `/ro` `/en` `/de` `/fr` | The menu, statically pre-rendered per language |
 
 `POSTEL`-friendly: `/RO`, `/En/`, `//de//` and unknown 2-letter codes are redirected to the canonical
