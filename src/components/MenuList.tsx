@@ -71,7 +71,7 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
         <section
           key={category.id}
           id={category.id}
-          className="scroll-mt-40 rounded-3xl border border-line bg-surface/70 p-4 backdrop-blur-sm sm:p-6"
+          className="rounded-3xl border border-line bg-surface/70 p-4 backdrop-blur-sm sm:p-6"
         >
           <header className="flex items-center gap-2.5 border-b border-line pb-2.5">
             <span className="text-brand">

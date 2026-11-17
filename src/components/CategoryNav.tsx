@@ -15,6 +15,7 @@ export function CategoryNav({
   const [active, setActive] = useState(categories[0]?.id ?? "");
   const railRef = useRef<HTMLUListElement>(null);
   const chipRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const frameRef = useRef(0);
 
   // Serial Position Effect + Jakob's Law: keep the current section visible in the rail.
   useEffect(() => {
@@ -29,6 +30,11 @@ export function CategoryNav({
     });
   }, [active]);
 
+  /**
+   * Active section = the last one whose top has passed just under the sticky
+   * header. Measuring real page geometry (instead of an arbitrary observer band)
+   * keeps the highlighted chip exactly in sync with what the reader sees.
+   */
   useEffect(() => {
     const sections = categories
       .map((category) => document.getElementById(category.id))
@@ -36,19 +42,51 @@ export function CategoryNav({
 
     if (sections.length === 0) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+    const header = document.querySelector<HTMLElement>("header");
 
-        if (visible) setActive(visible.target.id);
-      },
-      { rootMargin: "-35% 0px -55% 0px", threshold: 0 },
-    );
+    const measure = () => {
+      frameRef.current = 0;
 
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+      const threshold = (header?.offsetHeight ?? 96) + 24;
+
+      // Anchor jumps must land exactly at the threshold, otherwise the section
+      // you just tapped would immediately read as “not yet active”.
+      document.documentElement.style.scrollPaddingTop = `${threshold}px`;
+      const scrolledToEnd =
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 8;
+
+      let current = sections[0].id;
+
+      if (scrolledToEnd) {
+        current = sections[sections.length - 1].id;
+      } else {
+        for (const section of sections) {
+          if (section.getBoundingClientRect().top - threshold <= 0) {
+            current = section.id;
+          }
+        }
+      }
+
+      setActive((previous) => (previous === current ? previous : current));
+    };
+
+    const schedule = () => {
+      if (frameRef.current) return;
+      frameRef.current = window.requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    window.addEventListener("hashchange", schedule);
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("hashchange", schedule);
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
+    };
   }, [categories]);
 
   return (
