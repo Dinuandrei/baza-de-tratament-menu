@@ -1,4 +1,5 @@
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { ItemIcon } from "@/components/ItemIcon";
 import type { Category, Item, Tag } from "@/data/menu";
 import { t, type Locale } from "@/lib/i18n";
 
@@ -46,20 +47,27 @@ function Price({ price, locale }: { price?: number; locale: Locale }) {
 
 function MenuItem({ item, locale }: { item: Item; locale: Locale }) {
   return (
-    <li className="flex items-baseline gap-2 py-2.5">
-      <div className="min-w-0">
-        <p className="text-[15px] font-semibold leading-snug text-white/95">
-          {item.name[locale]}
-          {item.tags?.length ? <TagChips tags={item.tags} locale={locale} /> : null}
-        </p>
-        {item.desc ? (
-          <p className="mt-0.5 text-xs leading-snug text-muted">{item.desc[locale]}</p>
-        ) : null}
+    <li className="flex gap-3 py-2.5">
+      {/* pictogram: same hand-drawn line style as the poster doodles */}
+      <span className="mt-px shrink-0 text-white/45" aria-hidden>
+        <ItemIcon name={item.icon} className="h-[19px] w-[19px]" />
+      </span>
+
+      <div className="flex min-w-0 flex-1 items-baseline gap-2">
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold leading-snug text-white/95">
+            {item.name[locale]}
+            {item.tags?.length ? <TagChips tags={item.tags} locale={locale} /> : null}
+          </p>
+          {item.desc ? (
+            <p className="mt-0.5 text-xs leading-snug text-muted">{item.desc[locale]}</p>
+          ) : null}
+        </div>
+
+        <span aria-hidden className="mb-1 h-px flex-1 border-b border-dotted border-line" />
+
+        <Price price={item.price} locale={locale} />
       </div>
-
-      <span aria-hidden className="mb-1 h-px flex-1 border-b border-dotted border-line" />
-
-      <Price price={item.price} locale={locale} />
     </li>
   );
 }

@@ -10,6 +10,7 @@ Every decision below is traceable to a law from *Laws of UX* (Jon Yablonski). No
 | **Miller's Law** | Item counts stay well under 7±2 *per chunk* (largest chunk = 9 hot drinks). Category rail = 7 chips, the ceiling of working memory. |
 | **Chunking + Law of Common Region** | Every category is a bordered card with a header rule, so grouping is visible without reading. |
 | **Law of Proximity** | Name + tags + price sit on one baseline row; the dotted leader binds name to price across the gap. |
+| **Pictograms (per product)** | Every product carries its own hand-drawn glyph in the poster's doodle language (1.5px stroke, rounded caps, no fills, 24px grid): espresso vs. long coffee vs. flat white are three different cups, Guinness is a pint with a head, Bucur is a mug with a handle, Kit Kat is a bar, each Jack variant keeps the same tumbler and changes only its accent (flame / apple / honeycomb). Icons are one muted grey so they group by shape (Law of Similarity) and never compete with the orange price (Von Restorff). |
 | **Law of Similarity** | All prices share one orange, tabular-numeral style — scan the column, not the text. |
 | **Law of Uniform Connectedness** | Dotted leader line physically connects product → price; the sticky rail connects chip → section. |
 | **Law of Prägnanz** | One accent colour, one typeface, two radii. Doodles are reduced to emoji-sized glyphs. |

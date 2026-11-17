@@ -22,11 +22,14 @@ Everything lives in **`src/data/menu.ts`** — one array of categories, each wit
   id: "cafea",
   name: l("Cafea", "Coffee", "Кафе", "Кафа"),
   items: [
-    { id: "espresso", name: same("Espresso"), price: 10 },
+    { id: "espresso", icon: "espresso", name: same("Espresso"), price: 10 },
     // no `price` → the row renders a quiet “—” instead of a number
   ],
 }
 ```
+
+`icon` is one of the hand-drawn pictograms in `src/lib/icons.ts` (rendered by
+`src/components/ItemIcon.tsx`): one glyph per product, same 1.5px doodle style as the poster.
 
 `same("X")` repeats one name in all 4 languages, `l(ro, en, bg, sr)` gives per-language names.
 `tags: ["na"]` renders the `0%` chip, `tags: ["spicy"]` renders the picant chip.
