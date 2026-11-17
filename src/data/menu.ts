@@ -20,21 +20,17 @@ export type Category = {
   items: Item[];
 };
 
-const same = (value: string): Localized => ({ ro: value, en: value, de: value, fr: value });
+const same = (value: string): Localized => ({ ro: value, en: value, bg: value, sr: value });
 
-const l = (ro: string, en: string, de: string, fr: string): Localized => ({ ro, en, de, fr });
+const l = (ro: string, en: string, bg: string, sr: string): Localized => ({ ro, en, bg, sr });
 
 export const categories: Category[] = [
   {
     id: "cafea",
-    name: l("Cafea", "Coffee", "Kaffee", "Café"),
+    name: l("Cafea", "Coffee", "Кафе", "Кафа"),
     items: [
       { id: "espresso", name: same("Espresso"), price: 10 },
-      {
-        id: "cafea-lunga",
-        name: l("Cafea lungă", "Long coffee", "Langer Kaffee", "Café long"),
-        price: 10,
-      },
+      { id: "cafea-lunga", name: l("Cafea lungă", "Long coffee", "Дълго кафе", "Дуга кафа"), price: 10 },
       { id: "americano", name: same("Americano"), price: 10 },
       { id: "macchiato", name: same("Macchiato"), price: 14 },
       { id: "flat-white", name: same("Flat White"), price: 16 },
@@ -42,16 +38,21 @@ export const categories: Category[] = [
   },
   {
     id: "ape",
-    name: l("Apă & Răcoritoare", "Water & Softs", "Wasser & Erfrischung", "Eau & Sodas"),
+    name: l(
+      "Apă & Răcoritoare",
+      "Water & Softs",
+      "Вода и безалкохолни",
+      "Вода и безалкохолна пића",
+    ),
     items: [
       {
         id: "apa-plata",
-        name: l("Apă plată", "Still water", "Stilles Wasser", "Eau plate"),
+        name: l("Apă plată", "Still water", "Вода без газ", "Негазирана вода"),
         price: 10,
       },
       {
         id: "apa-minerala",
-        name: l("Apă minerală", "Sparkling water", "Sprudelwasser", "Eau gazeuse"),
+        name: l("Apă minerală", "Sparkling water", "Газирана вода", "Газирана вода"),
         price: 10,
       },
       { id: "cola", name: same("Cola"), price: 15 },
@@ -62,7 +63,7 @@ export const categories: Category[] = [
   },
   {
     id: "bere",
-    name: l("Bere", "Beer", "Bier", "Bière"),
+    name: l("Bere", "Beer", "Бира", "Пиво"),
     items: [
       { id: "guinness", name: same("Guinness"), price: 29 },
       { id: "bucur-lager", name: same("Bucur Lager"), price: 17 },
@@ -70,7 +71,7 @@ export const categories: Category[] = [
   },
   {
     id: "bauturi-calde",
-    name: l("Băuturi calde", "Hot drinks", "Heißgetränke", "Boissons chaudes"),
+    name: l("Băuturi calde", "Hot drinks", "Топли напитки", "Топли напици"),
     items: [
       { id: "strudel-stroh", name: same("Strudel Stroh"), price: 22 },
       { id: "hot-kafka", name: same("Hot Kafka"), price: 24 },
@@ -81,8 +82,8 @@ export const categories: Category[] = [
         name: l(
           "Suc de mere cald (0%)",
           "Warm apple juice (0%)",
-          "Warmer Apfelsaft (0%)",
-          "Jus de pomme chaud (0%)",
+          "Топъл ябълков сок (0%)",
+          "Топли сок од јабуке (0%)",
         ),
         price: 12,
         tags: ["na"],
@@ -90,12 +91,12 @@ export const categories: Category[] = [
       { id: "hot-ginger", name: same("Hot Ginger (0%)"), price: 14, tags: ["na"] },
       {
         id: "ceai",
-        name: l("Ceai fierbinte", "Hot tea", "Heißer Tee", "Thé chaud"),
+        name: l("Ceai fierbinte", "Hot tea", "Горещ чай", "Врућ чај"),
         price: 10,
       },
       {
         id: "ciocolata-calda",
-        name: l("Ciocolată caldă", "Hot chocolate", "Heiße Schokolade", "Chocolat chaud"),
+        name: l("Ciocolată caldă", "Hot chocolate", "Горещ шоколад", "Врућа чоколада"),
         price: 20,
       },
       { id: "kit-kat-choco", name: same("Kit Kat Choco"), price: 15 },
@@ -103,29 +104,49 @@ export const categories: Category[] = [
   },
   {
     id: "mancare",
-    name: l("Mâncare", "Food", "Essen", "À manger"),
+    name: l("Mâncare", "Food", "Храна", "Храна"),
     items: [
       {
         id: "cartofi-prajiti",
-        name: l("Cartofi prăjiți", "French fries", "Pommes frites", "Frites"),
+        name: l("Cartofi prăjiți", "French fries", "Пържени картофи", "Помфрит"),
       },
       {
         id: "cartofi-parmezan",
         name: l(
           "Cartofi cu parmezan",
           "Parmesan fries",
-          "Pommes mit Parmesan",
-          "Frites au parmesan",
+          "Пържени картофи с пармезан",
+          "Помфрит с пармезан",
         ),
       },
-      { id: "cartofi-smoky", name: same("Cartofi Smoky Stuff") },
-      { id: "cartofi-spicy", name: same("Cartofi Spicy Stuff"), tags: ["spicy"] },
-      { id: "bierdog", name: same("Bierdog") },
+      {
+        id: "cartofi-smoky",
+        name: l(
+          "Cartofi Smoky Stuff",
+          "Smoky Stuff fries",
+          "Картофи Smoky Stuff",
+          "Помфрит Smoky Stuff",
+        ),
+      },
+      {
+        id: "cartofi-spicy",
+        name: l(
+          "Cartofi Spicy Stuff",
+          "Spicy Stuff fries",
+          "Картофи Spicy Stuff",
+          "Помфрит Spicy Stuff",
+        ),
+        tags: ["spicy"],
+      },
+      {
+        id: "bierdog",
+        name: l("Bierdog", "Beer dog", "Бирдог", "Бирдог"),
+      },
     ],
   },
   {
     id: "long-drinks",
-    name: same("Long drinks"),
+    name: l("Long drinks", "Long drinks", "Лонг дринкове", "Лонг дринкови"),
     items: [
       { id: "jack-coke", name: same("Jack & Coke"), price: 25 },
       { id: "cuba-libre", name: same("Cuba Libre"), price: 24 },
@@ -136,7 +157,7 @@ export const categories: Category[] = [
   },
   {
     id: "shoturi",
-    name: l("Shoturi / Măsuri", "Shots", "Shots", "Shots"),
+    name: l("Shoturi / Măsuri", "Shots", "Шотове", "Шотови"),
     items: [
       { id: "jack-daniels", name: same("Jack Daniel's") },
       { id: "vodka-russian-standard", name: same("Vodka Russian Standard") },

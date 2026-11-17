@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { LocaleFlag } from "@/components/Flags";
 import { defaultLocale, isLocale, localeLabels, locales, t, type Locale } from "@/lib/i18n";
 
 const ITEM_H = 60;
@@ -215,8 +216,8 @@ export function LanguageWheel() {
                 aria-selected={active}
                 tabIndex={-1}
                 onClick={() => goTo(locale)}
-                className={`flex w-full snap-center items-center justify-center text-center font-extrabold uppercase tracking-tight transition-[color] duration-150 ${
-                  active ? "text-2xl text-white" : "text-xl text-white/60"
+                className={`flex w-full snap-center items-center justify-center gap-2.5 text-center font-extrabold uppercase tracking-tight transition-[color] duration-150 ${
+                  active ? "text-2xl text-white" : "text-xl text-white/70"
                 }`}
                 style={{
                   height: ITEM_H,
@@ -224,7 +225,13 @@ export function LanguageWheel() {
                   willChange: "transform, opacity",
                 }}
               >
-                {localeLabels[locale]}
+                <LocaleFlag
+                  locale={locale}
+                  className={`h-4 w-6 shrink-0 transition-transform duration-150 ${
+                    active ? "scale-110" : ""
+                  }`}
+                />
+                <span className="leading-none">{localeLabels[locale]}</span>
               </button>
             );
           })}

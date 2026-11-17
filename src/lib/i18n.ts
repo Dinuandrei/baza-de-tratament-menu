@@ -1,4 +1,4 @@
-export const locales = ["ro", "en", "de", "fr"] as const;
+export const locales = ["ro", "en", "bg", "sr"] as const;
 
 export type Locale = (typeof locales)[number];
 
@@ -8,73 +8,81 @@ export function isLocale(value: string): value is Locale {
   return (locales as readonly string[]).includes(value);
 }
 
-/** How each language names itself on the picker screen. */
+/** How each language names itself on the picker. */
 export const localeLabels: Record<Locale, string> = {
   ro: "Română",
   en: "English",
-  de: "Deutsch",
-  fr: "Français",
+  bg: "Български",
+  sr: "Српски",
+};
+
+/** Native <html lang> / hreflang codes. */
+export const localeHtmlLang: Record<Locale, string> = {
+  ro: "ro",
+  en: "en",
+  bg: "bg",
+  sr: "sr",
 };
 
 export const t = {
   chooseLanguage: {
     ro: "Alege limba",
     en: "Choose language",
-    de: "Sprache wählen",
-    fr: "Choisir la langue",
+    bg: "Изберете език",
+    sr: "Изаберите језик",
   },
   seeMenu: {
     ro: "Vezi meniul",
     en: "See the menu",
-    de: "Zur Karte",
-    fr: "Voir la carte",
+    bg: "Вижте менюто",
+    sr: "Погледајте мени",
   },
   continueAs: {
     ro: "Continuă",
     en: "Continue",
-    de: "Weiter",
-    fr: "Continuer",
+    bg: "Продължи",
+    sr: "Настави",
   },
   menu: {
     ro: "Meniul",
     en: "Menu",
-    de: "Karte",
-    fr: "Carte",
+    bg: "Меню",
+    sr: "Мени",
   },
   language: {
     ro: "Limba",
     en: "Language",
-    de: "Sprache",
-    fr: "Langue",
+    bg: "Език",
+    sr: "Језик",
   },
   pricesNote: {
     ro: "Prețurile sunt în lei, cu TVA inclus.",
     en: "Prices are in lei (RON), VAT included.",
-    de: "Preise in Lei (RON), inkl. MwSt.",
-    fr: "Prix en lei (RON), TVA incluse.",
+    bg: "Цените са в леи (RON), с включено ДДС.",
+    sr: "Цене су у лејима (RON), са укљученим ПДВ-ом.",
   },
   priceOnRequest: {
     ro: "preț la cerut",
     en: "ask",
-    de: "auf Anfrage",
-    fr: "sur demande",
+    bg: "при заявка",
+    sr: "на упит",
   },
   back: {
     ro: "Schimbă limba",
     en: "Change language",
-    de: "Sprache ändern",
-    fr: "Changer de langue",
+    bg: "Смяна на езика",
+    sr: "Промени језик",
   },
   na: {
     ro: "fără alcool",
     en: "no alcohol",
-    de: "alkoholfrei",
-    fr: "sans alcool",
+    bg: "безалкохолно",
+    sr: "без алкохола",
   },
   spicy: {
     ro: "picant",
     en: "spicy",
-    de: "scharf",
-    fr: "épicé",
+    bg: "лютиво",
+    sr: "љуто",
   },
 } satisfies Record<string, Record<Locale, string>>;

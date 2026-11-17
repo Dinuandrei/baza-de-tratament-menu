@@ -28,6 +28,7 @@ Every decision below is traceable to a law from *Laws of UX* (Jon Yablonski). No
 | **Working Memory** | Language choice is persisted; the current category is always on screen; nothing must be remembered between screens. |
 | **Aesthetic / Accessibility floor** | `prefers-reduced-motion`, `focus-visible` rings, skip-link, semantic landmarks, AA contrast on all text, `aria-current` on the active chip and language. |
 | **Wheel picker specifics** | Native scroll-snap does the physics (no JS animation loop); transforms are painted straight to DOM nodes so a scroll frame never re-renders React. The list repeats three times and re-centres by one full cycle, so the wheel never reaches an edge and never shows the same language twice. `role="listbox"` + ArrowUp/ArrowDown/Enter keeps it fully keyboard operable; `<noscript>` links keep it usable without JS; the remembered language starts the wheel at the last choice (Working Memory). |
+| **Flags, not emoji** | Each language carries a flag drawn as inline SVG: regional-indicator emoji degrade to bare letter pairs on Windows Chrome/Edge — exactly where the language choice must be unmistakable. |
 | **Selective Attention (wheel)** | Only the centred row sits inside the orange band at full opacity and full weight — everything else is dimmed and tilted, so the current value is never in doubt. |
 
 ## Deliberately not applied

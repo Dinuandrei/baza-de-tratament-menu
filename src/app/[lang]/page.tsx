@@ -3,8 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryNav } from "@/components/CategoryNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Logo } from "@/components/Logo";
-import { MenuList } from "@/components/MenuList";
+import { Logo } from "@/components/Logo";import { MenuList } from "@/components/MenuList";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { categories } from "@/data/menu";
 import { isLocale, localeLabels, locales, t } from "@/lib/i18n";
@@ -26,8 +25,8 @@ export async function generateMetadata({
   const titles: Record<string, string> = {
     ro: "#baza_de_tratament — meniu",
     en: "#baza_de_tratament — menu",
-    de: "#baza_de_tratament — Karte",
-    fr: "#baza_de_tratament — carte",
+    bg: "#baza_de_tratament — меню",
+    sr: "#baza_de_tratament — мени",
   };
 
   return {

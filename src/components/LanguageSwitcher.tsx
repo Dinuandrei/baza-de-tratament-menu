@@ -1,9 +1,15 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { localeLabels, locales, type Locale } from "@/lib/i18n";
+import { localeHtmlLang, localeLabels, locales, type Locale } from "@/lib/i18n";
 
 export function LanguageSwitcher({ current }: { current: Locale }) {
+  // <html lang> lives on the root layout, so keep the document language honest per route.
+  useEffect(() => {
+    document.documentElement.lang = localeHtmlLang[current];
+  }, [current]);
+
   return (
     <nav aria-label="Language" className="flex items-center gap-1">
       {locales.map((locale) => {
@@ -13,7 +19,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
           <Link
             key={locale}
             href={`/${locale}`}
-            hrefLang={locale}
+            hrefLang={localeHtmlLang[locale]}
             aria-current={active ? "true" : undefined}
             className={`flex min-h-9 min-w-11 items-center justify-center rounded-full px-3 text-[11px] font-black uppercase tracking-wider transition-colors ${
               active

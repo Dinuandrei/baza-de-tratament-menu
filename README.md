@@ -1,6 +1,6 @@
 # #baza_de_tratament — meniu digital
 
-Digital menu for **#baza_de_tratament**, in 4 languages (Română / English / Deutsch / Français).
+Digital menu for **#baza_de_tratament**, in 4 languages (Română / English / Български / Српски), each with its flag.
 Built with Next.js (App Router, static export of every locale), React 19 and Tailwind CSS 4.
 
 ## Routes
@@ -8,9 +8,9 @@ Built with Next.js (App Router, static export of every locale), React 19 and Tai
 | Route | What it is |
 | --- | --- |
 | `/` | Language picker — an iOS-style wheel (mirrors the printed poster) |
-| `/ro` `/en` `/de` `/fr` | The menu, statically pre-rendered per language |
+| `/ro` `/en` `/bg` `/sr` | The menu, statically pre-rendered per language |
 
-`POSTEL`-friendly: `/RO`, `/En/`, `//de//` and unknown 2-letter codes are redirected to the canonical
+`POSTEL`-friendly: `/RO`, `/En/`, `//bg//` and unknown 2-letter codes are redirected to the canonical
 route by `src/middleware.ts`. The chosen language is remembered in a `bt_lang` cookie.
 
 ## Editing the menu
@@ -20,7 +20,7 @@ Everything lives in **`src/data/menu.ts`** — one array of categories, each wit
 ```ts
 {
   id: "cafea",
-  name: l("Cafea", "Coffee", "Kaffee", "Café"),
+  name: l("Cafea", "Coffee", "Кафе", "Кафа"),
   items: [
     { id: "espresso", name: same("Espresso"), price: 10 },
     // no `price` → the row renders a quiet “—” instead of a number
@@ -28,7 +28,7 @@ Everything lives in **`src/data/menu.ts`** — one array of categories, each wit
 }
 ```
 
-`same("X")` repeats one name in all 4 languages, `l(ro, en, de, fr)` gives per-language names.
+`same("X")` repeats one name in all 4 languages, `l(ro, en, bg, sr)` gives per-language names.
 `tags: ["na"]` renders the `0%` chip, `tags: ["spicy"]` renders the picant chip.
 
 ## Design
