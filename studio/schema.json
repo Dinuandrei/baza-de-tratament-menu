@@ -575,6 +575,20 @@
               },
               "optional": true
             },
+            "descriptionHash": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "ingredientsHash": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
             "at": {
               "type": "objectAttribute",
               "value": {
@@ -583,6 +597,13 @@
               "optional": true
             },
             "provider": {
+              "type": "objectAttribute",
+              "value": {
+                "type": "string"
+              },
+              "optional": true
+            },
+            "status": {
               "type": "objectAttribute",
               "value": {
                 "type": "string"

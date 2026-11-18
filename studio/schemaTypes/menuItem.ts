@@ -100,6 +100,8 @@ export default defineType({
       title: 'Categorie',
       type: 'reference',
       to: [{type: 'category'}],
+      description:
+        'În ce secțiune apare produsul în meniu. Click pe câmp și alegi altă categorie — produsul se mută acolo, iar ordinea din lista veche nu îl mai afectează.',
       validation: (Rule) => Rule.required(),
     }),
     // --- Detalii produs: ce se vede în popup-ul „Vezi detalii” ---
@@ -174,10 +176,15 @@ export default defineType({
     }),
   ],
   preview: {
-    select: {title: 'name.ro', subtitle: 'name.en', price: 'price', icon: 'icon'},
-    prepare({title, subtitle, price, icon}) {
+    // The category next to the name: it is the one thing that tells you where a
+    // product belongs when you are looking at a search result or a flat list.
+    select: {title: 'name.ro', price: 'price', icon: 'icon', category: 'category.title.ro'},
+    prepare({title, price, icon, category}) {
       const lei = typeof price === 'number' ? `${price} lei` : '—'
-      return {title: `${title ?? 'Fără nume'} · ${lei}`, subtitle: `${icon ?? ''} ${subtitle ?? ''}`}
+      return {
+        title: `${title ?? 'Fără nume'} · ${lei}`,
+        subtitle: [category, icon].filter(Boolean).join(' · '),
+      }
     },
   },
 })

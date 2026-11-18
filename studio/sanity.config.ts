@@ -52,6 +52,14 @@ export default defineConfig({
                   )
               }),
             S.divider(),
+            // Finder only, no drag handles: with 40 products it is faster to search
+            // here than to guess which category a product sits in. Reordering
+            // happens in the lists above, where the drag handles are.
+            S.listItem()
+              .title('Toate produsele (căutare)')
+              .id('allMenuItems')
+              .child(S.documentTypeList('menuItem').title('Toate produsele')),
+            S.divider(),
             ...S.documentTypeListItems().filter(
               (item) => !['category', 'menuItem'].includes(item.getId() as string)
             ),
