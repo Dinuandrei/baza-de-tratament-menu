@@ -10,7 +10,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    // scripts/seed.ts imports the app's data file, which uses the "@/" alias.
+    "baseUrl": ".",
+    "paths": {"@/*": ["../src/*"]}
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", "dist", ".sanity"]

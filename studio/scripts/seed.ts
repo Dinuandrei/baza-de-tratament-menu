@@ -27,6 +27,19 @@ function localize(value?: MaybeLocalized): Record<string, string> | undefined {
   return Object.keys(output).length > 0 ? output : undefined
 }
 
+/** Same fallback for the localized lists (ingredients), keeping every list non-empty. */
+function localizeLists(
+  value?: Partial<Record<Locale, string[]>>,
+): Record<string, string[]> | undefined {
+  if (!value) return undefined
+  const output: Record<string, string[]> = {}
+  for (const locale of LOCALES) {
+    const list = value[locale] ?? value.ro
+    if (list && list.length > 0) output[locale] = list
+  }
+  return Object.keys(output).length > 0 ? output : undefined
+}
+
 const orderRank = (index: number) => String(index).padStart(4, '0')
 
 type SeededDoc = {_id: string; _type: string; [key: string]: unknown}
@@ -54,6 +67,12 @@ async function main() {
         icon: item.icon,
         category: {_type: 'reference', _ref: `category-${category.id}`},
         orderRank: orderRank(itemIndex),
+        // --- details shown in the “Vezi detalii” popup ---
+        ...(item.ingredients ? {ingredients: localizeLists(item.ingredients)} : {}),
+        ...(item.allergens?.length ? {allergens: item.allergens} : {}),
+        ...(item.nutrition ? {nutrition: item.nutrition} : {}),
+        ...(item.serving ? {serving: localize(item.serving)} : {}),
+        ...(typeof item.abv === 'number' ? {abv: item.abv} : {}),
       })
     })
   })

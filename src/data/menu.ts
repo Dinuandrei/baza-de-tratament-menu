@@ -5,6 +5,38 @@ export type Localized = Record<Locale, string>;
 
 export type Tag = "na" | "spicy" | "new";
 
+/**
+ * The 14 allergens the EU requires a food business to declare
+ * (Reg. (EU) 1169/2011, Annex II). Free text would drift ("gluten"/"grâu"/
+ * "Gluten"), so the Studio offers this fixed list and the UI translates it.
+ */
+export type AllergenId =
+  | "gluten"
+  | "crustaceans"
+  | "eggs"
+  | "fish"
+  | "peanuts"
+  | "soy"
+  | "milk"
+  | "nuts"
+  | "celery"
+  | "mustard"
+  | "sesame"
+  | "sulphites"
+  | "lupin"
+  | "molluscs";
+
+/** Values are per serving. Estimates until the kitchen confirms them. */
+export type Nutrition = {
+  calories?: number;
+  fat?: number;
+  saturatedFat?: number;
+  carbohydrates?: number;
+  sugar?: number;
+  protein?: number;
+  salt?: number;
+};
+
 export type Item = {
   id: string;
   icon: ItemIconName;
@@ -20,6 +52,15 @@ export type Item = {
   /** Price in lei. Omit when it is not fixed (shown as “—”). */
   price?: number;
   tags?: Tag[];
+  /** Same partial-fallback contract as `desc`. */
+  ingredients?: Partial<Record<Locale, string[]>>;
+  /** Declared allergens, from the fixed EU-14 list. */
+  allergens?: AllergenId[];
+  nutrition?: Nutrition;
+  /** Portion / volume, e.g. “330 ml”, “200 g”. */
+  serving?: Partial<Localized>;
+  /** Alcohol by volume, in percent. Omitted for alcohol-free items. */
+  abv?: number;
 };
 
 export type Category = {
@@ -37,6 +78,19 @@ export function descFor(item: Item, locale: Locale): string | undefined {
   return desc[locale] ?? desc.ro ?? desc.en;
 }
 
+export function ingredientsFor(item: Item, locale: Locale): string[] | undefined {
+  const list = item.ingredients;
+  if (!list) return undefined;
+  const resolved = list[locale] ?? list.ro ?? list.en;
+  return resolved && resolved.length > 0 ? resolved : undefined;
+}
+
+export function servingFor(item: Item, locale: Locale): string | undefined {
+  const serving = item.serving;
+  if (!serving) return undefined;
+  return serving[locale] ?? serving.ro ?? serving.en;
+}
+
 const same = (value: string): Localized => ({ ro: value, en: value, bg: value, sr: value });
 
 const l = (ro: string, en: string, bg: string, sr: string): Localized => ({ ro, en, bg, sr });
@@ -44,7 +98,7 @@ const l = (ro: string, en: string, bg: string, sr: string): Localized => ({ ro, 
 /** Description in the two languages it is written in so far. */
 const d = (ro: string, en: string): Partial<Localized> => ({ ro, en });
 
-export const categories: Category[] = [
+const RAW_CATEGORIES: Category[] = [
   {
     id: "cafea",
     name: l("Cafea", "Coffee", "Кафе", "Кафа"),
@@ -357,3 +411,338 @@ export const categories: Category[] = [
     ],
   },
 ];
+
+/* ------------------------------------------------------------------------- *
+ * Product details shown in the “Vezi detalii” popup: ingredients, declared
+ * allergens, nutrition, serving and ABV. Kept in a separate table so the menu
+ * above stays readable; `categories` below merges the two.
+ *
+ * Nutrition values are per serving and are ESTIMATES (typical values for the
+ * product); they are meant to be corrected in the Studio, which is the source
+ * of truth once the site reads from Sanity.
+ * ------------------------------------------------------------------------- */
+
+type ItemDetail = Pick<Item, "ingredients" | "allergens" | "nutrition" | "serving" | "abv">;
+
+const ing = (ro: string[], en: string[]): Partial<Record<Locale, string[]>> => ({ ro, en });
+const ml = (value: string): Partial<Localized> => ({ ro: value, en: value });
+
+const DETAILS: Record<string, ItemDetail> = {
+  // Cafea — apă + cafea; laptele aduce lactoza.
+  espresso: {
+    ingredients: ing(["apă", "cafea măcinată"], ["water", "ground coffee"]),
+    serving: ml("30 ml"),
+    nutrition: { calories: 3, fat: 0, saturatedFat: 0, carbohydrates: 0.5, sugar: 0, protein: 0.2, salt: 0 },
+  },
+  "cafea-lunga": {
+    ingredients: ing(["apă", "cafea măcinată"], ["water", "ground coffee"]),
+    serving: ml("60 ml"),
+    nutrition: { calories: 5, fat: 0, saturatedFat: 0, carbohydrates: 0.8, sugar: 0, protein: 0.3, salt: 0 },
+  },
+  americano: {
+    ingredients: ing(["apă", "cafea măcinată"], ["water", "ground coffee"]),
+    serving: ml("120 ml"),
+    nutrition: { calories: 5, fat: 0, saturatedFat: 0, carbohydrates: 0.8, sugar: 0, protein: 0.3, salt: 0 },
+  },
+  macchiato: {
+    ingredients: ing(["apă", "cafea măcinată", "lapte"], ["water", "ground coffee", "milk"]),
+    allergens: ["milk"],
+    serving: ml("40 ml"),
+    nutrition: { calories: 45, fat: 2.5, saturatedFat: 1.6, carbohydrates: 3.5, sugar: 3.4, protein: 2.2, salt: 0.04 },
+  },
+  "flat-white": {
+    ingredients: ing(["apă", "cafea măcinată", "lapte"], ["water", "ground coffee", "milk"]),
+    allergens: ["milk"],
+    serving: ml("160 ml"),
+    nutrition: { calories: 120, fat: 6, saturatedFat: 3.7, carbohydrates: 9, sugar: 9, protein: 6, salt: 0.1 },
+  },
+
+  // Apă & răcoritoare
+  "apa-plata": {
+    ingredients: ing(["apă plată"], ["still water"]),
+    serving: ml("500 ml"),
+    nutrition: { calories: 0, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  "apa-minerala": {
+    ingredients: ing(["apă minerală naturală carbogazoasă"], ["naturally sparkling mineral water"]),
+    serving: ml("500 ml"),
+    nutrition: { calories: 0, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  cola: {
+    ingredients: ing(
+      ["apă carbogazoasă", "zahăr", "colorant caramel", "acid fosforic", "aromă naturală", "cofeină"],
+      ["carbonated water", "sugar", "caramel colour", "phosphoric acid", "natural flavouring", "caffeine"],
+    ),
+    serving: ml("250 ml"),
+    nutrition: { calories: 105, fat: 0, saturatedFat: 0, carbohydrates: 26.5, sugar: 26.5, protein: 0, salt: 0.02 },
+  },
+  fanta: {
+    ingredients: ing(
+      ["apă carbogazoasă", "zahăr", "suc de portocale din concentrat", "acid citric", "aromă naturală"],
+      ["carbonated water", "sugar", "orange juice from concentrate", "citric acid", "natural flavouring"],
+    ),
+    serving: ml("250 ml"),
+    nutrition: { calories: 108, fat: 0, saturatedFat: 0, carbohydrates: 26, sugar: 26, protein: 0, salt: 0.02 },
+  },
+  sprite: {
+    ingredients: ing(
+      ["apă carbogazoasă", "zahăr", "acid citric", "aromă naturală de lămâie și lime"],
+      ["carbonated water", "sugar", "citric acid", "natural lemon-lime flavouring"],
+    ),
+    serving: ml("250 ml"),
+    nutrition: { calories: 96, fat: 0, saturatedFat: 0, carbohydrates: 21, sugar: 21, protein: 0, salt: 0.04 },
+  },
+  "fuzz-tea": {
+    ingredients: ing(
+      ["apă", "ceai", "suc de piersici", "zahăr", "acid citric"],
+      ["water", "tea", "peach juice", "sugar", "citric acid"],
+    ),
+    serving: ml("330 ml"),
+    nutrition: { calories: 100, fat: 0, saturatedFat: 0, carbohydrates: 24, sugar: 24, protein: 0, salt: 0.03 },
+  },
+
+  // Bere — malțul de orz înseamnă gluten.
+  guinness: {
+    ingredients: ing(
+      ["apă", "malț de orz", "orz", "hamei", "drojdie"],
+      ["water", "malted barley", "barley", "hops", "yeast"],
+    ),
+    allergens: ["gluten"],
+    serving: ml("500 ml"),
+    abv: 4.2,
+    nutrition: { calories: 210, fat: 0, saturatedFat: 0, carbohydrates: 16, sugar: 1, protein: 2, salt: 0.02 },
+  },
+  "bucur-lager": {
+    ingredients: ing(
+      ["apă", "malț de orz", "hamei", "drojdie"],
+      ["water", "malted barley", "hops", "yeast"],
+    ),
+    allergens: ["gluten"],
+    serving: ml("500 ml"),
+    abv: 4.6,
+    nutrition: { calories: 190, fat: 0, saturatedFat: 0, carbohydrates: 14, sugar: 0.5, protein: 1.6, salt: 0.02 },
+  },
+
+  // Băuturi calde
+  "strudel-stroh": {
+    ingredients: ing(
+      ["rom Stroh", "suc de mere", "scorțișoară", "zahăr"],
+      ["Stroh rum", "apple juice", "cinnamon", "sugar"],
+    ),
+    serving: ml("200 ml"),
+    abv: 15,
+    nutrition: { calories: 180, fat: 0, saturatedFat: 0, carbohydrates: 22, sugar: 21, protein: 0.2, salt: 0 },
+  },
+  "hot-kafka": {
+    ingredients: ing(
+      ["băutură spirtoasă", "miere", "condimente calde", "fructe"],
+      ["spirit", "honey", "warm spices", "fruit"],
+    ),
+    serving: ml("200 ml"),
+    abv: 20,
+    nutrition: { calories: 200, fat: 0, saturatedFat: 0, carbohydrates: 24, sugar: 23, protein: 0.3, salt: 0 },
+  },
+  "amaretto-strudel": {
+    ingredients: ing(
+      ["amaretto", "suc de mere", "scorțișoară"],
+      ["amaretto", "apple juice", "cinnamon"],
+    ),
+    allergens: ["nuts"],
+    serving: ml("200 ml"),
+    abv: 12,
+    nutrition: { calories: 175, fat: 0, saturatedFat: 0, carbohydrates: 21, sugar: 20, protein: 0.2, salt: 0 },
+  },
+  "hot-ginger-gin": {
+    ingredients: ing(
+      ["gin", "ghimbir", "miere", "lămâie"],
+      ["gin", "ginger", "honey", "lemon"],
+    ),
+    serving: ml("200 ml"),
+    abv: 18,
+    nutrition: { calories: 160, fat: 0, saturatedFat: 0, carbohydrates: 14, sugar: 13, protein: 0.1, salt: 0 },
+  },
+  "suc-mere-cald": {
+    ingredients: ing(["suc de mere", "scorțișoară"], ["apple juice", "cinnamon"]),
+    serving: ml("200 ml"),
+    nutrition: { calories: 120, fat: 0, saturatedFat: 0, carbohydrates: 28, sugar: 28, protein: 0.2, salt: 0 },
+  },
+  "hot-ginger": {
+    ingredients: ing(
+      ["apă", "ghimbir", "miere", "lămâie"],
+      ["water", "ginger", "honey", "lemon"],
+    ),
+    serving: ml("250 ml"),
+    nutrition: { calories: 90, fat: 0, saturatedFat: 0, carbohydrates: 21, sugar: 20, protein: 0.1, salt: 0 },
+  },
+  ceai: {
+    ingredients: ing(["apă", "ceai"], ["water", "tea"]),
+    serving: ml("250 ml"),
+    nutrition: { calories: 2, fat: 0, saturatedFat: 0, carbohydrates: 0.4, sugar: 0, protein: 0, salt: 0 },
+  },
+  "ciocolata-calda": {
+    ingredients: ing(
+      ["lapte", "cacao", "zahăr"],
+      ["milk", "cocoa", "sugar"],
+    ),
+    allergens: ["milk"],
+    serving: ml("250 ml"),
+    nutrition: { calories: 210, fat: 8, saturatedFat: 5, carbohydrates: 26, sugar: 24, protein: 8, salt: 0.2 },
+  },
+  "kit-kat-choco": {
+    ingredients: ing(
+      ["lapte", "cacao", "zahăr", "biscuit Kit Kat"],
+      ["milk", "cocoa", "sugar", "Kit Kat biscuit"],
+    ),
+    allergens: ["milk", "gluten", "soy"],
+    serving: ml("250 ml"),
+    nutrition: { calories: 320, fat: 14, saturatedFat: 8.5, carbohydrates: 38, sugar: 34, protein: 9, salt: 0.3 },
+  },
+
+  // Mâncare — prăjit în ulei, deci declarăm și ce se prăjește în aceeași baie.
+  "cartofi-prajiti": {
+    ingredients: ing(
+      ["cartofi", "ulei vegetal", "sare"],
+      ["potatoes", "vegetable oil", "salt"],
+    ),
+    serving: ml("200 g"),
+    nutrition: { calories: 312, fat: 15, saturatedFat: 2.5, carbohydrates: 41, sugar: 0.5, protein: 3.4, salt: 0.8 },
+  },
+  "cartofi-parmezan": {
+    ingredients: ing(
+      ["cartofi", "ulei vegetal", "sare", "parmezan"],
+      ["potatoes", "vegetable oil", "salt", "parmesan"],
+    ),
+    allergens: ["milk"],
+    serving: ml("200 g"),
+    nutrition: { calories: 380, fat: 21, saturatedFat: 6, carbohydrates: 41, sugar: 0.5, protein: 8, salt: 1.1 },
+  },
+  "cartofi-smoky": {
+    ingredients: ing(
+      ["cartofi", "ulei vegetal", "sare", "condiment afumat"],
+      ["potatoes", "vegetable oil", "salt", "smoked seasoning"],
+    ),
+    serving: ml("200 g"),
+    nutrition: { calories: 330, fat: 16, saturatedFat: 3, carbohydrates: 42, sugar: 0.6, protein: 3.6, salt: 1.2 },
+  },
+  "cartofi-spicy": {
+    ingredients: ing(
+      ["cartofi", "ulei vegetal", "sare", "ardei iute", "condiment iute"],
+      ["potatoes", "vegetable oil", "salt", "chilli", "hot spice mix"],
+    ),
+    serving: ml("200 g"),
+    nutrition: { calories: 330, fat: 16, saturatedFat: 3, carbohydrates: 42, sugar: 0.6, protein: 3.6, salt: 1.2 },
+  },
+  bierdog: {
+    ingredients: ing(
+      ["chiflă", "cârnat de porc", "muștar", "ketchup"],
+      ["bun", "pork sausage", "mustard", "ketchup"],
+    ),
+    allergens: ["gluten", "mustard", "celery"],
+    serving: ml("1 buc"),
+    nutrition: { calories: 400, fat: 22, saturatedFat: 8, carbohydrates: 32, sugar: 5, protein: 14, salt: 2.1 },
+  },
+
+  // Long drinks — 250 ml plus gheață; ABV calculat la rețetă, orientativ.
+  "jack-coke": {
+    ingredients: ing(
+      ["Jack Daniel's", "cola", "lămâie", "gheață"],
+      ["Jack Daniel's", "cola", "lemon", "ice"],
+    ),
+    serving: ml("250 ml"),
+    abv: 8,
+    nutrition: { calories: 150, fat: 0, saturatedFat: 0, carbohydrates: 14, sugar: 14, protein: 0, salt: 0.01 },
+  },
+  "cuba-libre": {
+    ingredients: ing(
+      ["rom", "cola", "lime", "gheață"],
+      ["rum", "cola", "lime", "ice"],
+    ),
+    serving: ml("250 ml"),
+    abv: 8,
+    nutrition: { calories: 145, fat: 0, saturatedFat: 0, carbohydrates: 14, sugar: 13, protein: 0, salt: 0.01 },
+  },
+  "gin-tonic": {
+    ingredients: ing(
+      ["gin", "apă tonică", "lime", "gheață"],
+      ["gin", "tonic water", "lime", "ice"],
+    ),
+    allergens: ["sulphites"],
+    serving: ml("250 ml"),
+    abv: 7,
+    nutrition: { calories: 130, fat: 0, saturatedFat: 0, carbohydrates: 11, sugar: 11, protein: 0, salt: 0.01 },
+  },
+  "vodka-tonic": {
+    ingredients: ing(
+      ["vodka", "apă tonică", "lime", "gheață"],
+      ["vodka", "tonic water", "lime", "ice"],
+    ),
+    allergens: ["sulphites"],
+    serving: ml("250 ml"),
+    abv: 7,
+    nutrition: { calories: 125, fat: 0, saturatedFat: 0, carbohydrates: 11, sugar: 11, protein: 0, salt: 0.01 },
+  },
+  "jager-coke": {
+    ingredients: ing(
+      ["Jägermeister", "cola", "gheață"],
+      ["Jägermeister", "cola", "ice"],
+    ),
+    serving: ml("250 ml"),
+    abv: 8,
+    nutrition: { calories: 160, fat: 0, saturatedFat: 0, carbohydrates: 17, sugar: 16, protein: 0, salt: 0.01 },
+  },
+
+  // Shoturi / măsuri — 40 ml.
+  "jack-daniels": {
+    ingredients: ing(["whiskey de Tennessee"], ["Tennessee whiskey"]),
+    serving: ml("40 ml"),
+    abv: 40,
+    nutrition: { calories: 94, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  "vodka-russian-standard": {
+    ingredients: ing(["vodka", "apă dedurizată"], ["vodka", "softened water"]),
+    serving: ml("40 ml"),
+    abv: 40,
+    nutrition: { calories: 94, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  "jack-fire": {
+    ingredients: ing(["whiskey de Tennessee", "scorțișoară"], ["Tennessee whiskey", "cinnamon"]),
+    serving: ml("40 ml"),
+    abv: 35,
+    nutrition: { calories: 82, fat: 0, saturatedFat: 0, carbohydrates: 0.6, sugar: 0.6, protein: 0, salt: 0 },
+  },
+  "jack-apple": {
+    ingredients: ing(["whiskey de Tennessee", "lichior de măr"], ["Tennessee whiskey", "apple liqueur"]),
+    serving: ml("40 ml"),
+    abv: 35,
+    nutrition: { calories: 82, fat: 0, saturatedFat: 0, carbohydrates: 1.2, sugar: 1.2, protein: 0, salt: 0 },
+  },
+  "jack-honey": {
+    ingredients: ing(["whiskey de Tennessee", "lichior de miere"], ["Tennessee whiskey", "honey liqueur"]),
+    serving: ml("40 ml"),
+    abv: 35,
+    nutrition: { calories: 82, fat: 0, saturatedFat: 0, carbohydrates: 0.8, sugar: 0.8, protein: 0, salt: 0 },
+  },
+  "tatritea-52": {
+    ingredients: ing(["țuică de prune"], ["plum brandy"]),
+    serving: ml("40 ml"),
+    abv: 52,
+    nutrition: { calories: 122, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  "tatritea-62-72": {
+    ingredients: ing(["țuică de prune"], ["plum brandy"]),
+    serving: ml("40 ml"),
+    abv: 62,
+    nutrition: { calories: 146, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+  "tequila-el-camino": {
+    ingredients: ing(["tequila 100% agave"], ["100% agave tequila"]),
+    serving: ml("40 ml"),
+    abv: 38,
+    nutrition: { calories: 89, fat: 0, saturatedFat: 0, carbohydrates: 0, sugar: 0, protein: 0, salt: 0 },
+  },
+};
+
+export const categories: Category[] = RAW_CATEGORIES.map((category) => ({
+  ...category,
+  items: category.items.map((item) => ({ ...item, ...(DETAILS[item.id] ?? {}) })),
+}));

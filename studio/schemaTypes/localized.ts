@@ -44,3 +44,26 @@ export const localizedText = defineType({
     })
   ),
 })
+
+/**
+ * Ingredients are per language, but the allergens are NOT: they come from a
+ * fixed EU-14 list (schemaTypes/allergens.ts) so the pill labels stay
+ * consistent. This wraps just the localized ingredient lists.
+ */
+export const localizedList = defineType({
+  name: 'localizedList',
+  title: 'Listă (4 limbi)',
+  type: 'object',
+  options: {collapsible: false, columns: 2},
+  fields: LOCALES.map((locale) =>
+    defineField({
+      name: locale.id,
+      title: locale.title,
+      type: 'array',
+      of: [{type: 'string'}],
+      options: {layout: 'tags'},
+      validation: (Rule) =>
+        locale.id === 'ro' ? Rule.required().error('Româna este limba de bază') : Rule,
+    })
+  ),
+})

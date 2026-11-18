@@ -4,7 +4,16 @@ import { useEffect, useId, useRef, useState } from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ItemIcon } from "@/components/ItemIcon";
 import { ProductArt } from "@/components/ProductArt";
-import { descFor, type Category, type Item, type Tag } from "@/data/menu";
+import {
+  descFor,
+  ingredientsFor,
+  servingFor,
+  type Category,
+  type Item,
+  type Nutrition,
+  type Tag,
+} from "@/data/menu";
+import { ALLERGENS, allergenLabel } from "@/lib/allergens";
 import { t, type Locale } from "@/lib/i18n";
 
 function TagChips({ tags, locale }: { tags: Tag[]; locale: Locale }) {
@@ -50,6 +59,127 @@ function Price({ price, locale }: { price?: number; locale: Locale }) {
 }
 
 /**
+ * One collapsible block inside the popup. Native <details> keeps this a
+ * zero-JS disclosure that screen readers and the keyboard already understand;
+ * the row matches the 44px tap target used everywhere else.
+ */
+function Section({
+  title,
+  defaultOpen,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <details open={defaultOpen} className="group border-t border-line/70 first:border-t-0">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 py-2 text-[11px] font-black uppercase tracking-wider text-brand-soft [&::-webkit-details-marker]:hidden">
+        {title}
+        <span
+          aria-hidden="true"
+          className="text-muted transition-transform group-open:rotate-180"
+        >
+          ⌄
+        </span>
+      </summary>
+      <div className="pb-3 text-sm leading-relaxed text-muted">{children}</div>
+    </details>
+  );
+}
+
+/** Allergen pills: badge + name, wrapping so 14 of them still fit on narrow screens. */
+function AllergenPills({ ids, locale }: { ids: string[]; locale: Locale }) {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {ids.map((id) => {
+        const meta = ALLERGENS[id as keyof typeof ALLERGENS];
+        if (!meta) return null;
+        return (
+          <li
+            key={id}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2/60 py-1 pl-1 pr-2.5 text-[11px] font-semibold text-white/80"
+          >
+            <span
+              aria-hidden="true"
+              className="grid h-5 w-5 place-items-center rounded-full bg-brand/20 text-[9px] font-black text-brand-soft"
+            >
+              {meta.code}
+            </span>
+            {allergenLabel(id as keyof typeof ALLERGENS, locale)}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const NUTRITION_ROWS: [keyof Nutrition, keyof typeof t, string][] = [
+  ["calories", "calories", " kcal"],
+  ["fat", "fat", " g"],
+  ["saturatedFat", "saturatedFat", " g"],
+  ["carbohydrates", "carbohydrates", " g"],
+  ["sugar", "sugar", " g"],
+  ["protein", "protein", " g"],
+  ["salt", "salt", " g"],
+];
+
+function NutritionTable({
+  nutrition,
+  locale,
+  serving,
+  abv,
+}: {
+  nutrition?: Nutrition;
+  locale: Locale;
+  serving?: string;
+  abv?: number;
+}) {
+  const rows = NUTRITION_ROWS.filter(([key]) => typeof nutrition?.[key] === "number");
+
+  if (rows.length === 0 && abv === undefined) {
+    return <p className="italic opacity-60">{t.noNutrition[locale]}</p>;
+  }
+
+  return (
+    <div>
+      {(serving || abv !== undefined) && (
+        <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold uppercase tracking-wider text-muted/80">
+          {serving ? (
+            <span>
+              {t.serving[locale]}: <span className="text-white/80">{serving}</span>
+            </span>
+          ) : null}
+          {abv !== undefined ? (
+            <span>
+              {t.abv[locale]}: <span className="text-white/80">{abv}% vol</span>
+            </span>
+          ) : null}
+        </p>
+      )}
+      {rows.length > 0 ? (
+        <>
+          <dl className="divide-y divide-line/60">
+            {rows.map(([key, labelKey, unit]) => (
+              <div key={key} className="flex items-baseline justify-between gap-3 py-1">
+                <dt className="text-muted">{t[labelKey][locale]}</dt>
+                <dd className="shrink-0 font-bold tabular-nums text-white/90">
+                  {nutrition?.[key]}
+                  {unit}
+                </dd>
+              </div>
+            ))}
+          </dl>
+          <p className="mt-1.5 text-[10px] uppercase tracking-wider text-muted/60">
+            {t.perServing[locale]}
+          </p>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/**
  * The popup. A native <dialog> so the browser gives us the focus trap, the
  * inert background, Esc-to-close and the ::backdrop layer for free — all of
  * which hand-rolled modals get wrong.
@@ -68,6 +198,8 @@ function DetailsDialog({
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const desc = descFor(item, locale);
+  const ingredients = ingredientsFor(item, locale);
+  const serving = servingFor(item, locale);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -134,6 +266,44 @@ function DetailsDialog({
         </div>
 
         {desc ? <p className="mt-3 text-sm leading-relaxed text-muted">{desc}</p> : null}
+
+        {/* Ingredients / allergens / nutrition, mirroring the reference menu but
+            inside our own card: same type scale, brand accents, 44px rows. */}
+        <div className="mt-3">
+          <Section title={t.ingredients[locale]}>
+            {ingredients && ingredients.length > 0 ? (
+              <ul className="list-disc space-y-0.5 pl-4">
+                {ingredients.map((entry) => (
+                  <li key={entry}>{entry}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="italic opacity-60">{t.noIngredients[locale]}</p>
+            )}
+          </Section>
+
+          <Section title={t.allergens[locale]} defaultOpen>
+            {item.allergens && item.allergens.length > 0 ? (
+              <>
+                <AllergenPills ids={item.allergens} locale={locale} />
+                <p className="mt-2 text-[10px] leading-relaxed text-muted/60">
+                  {t.allergenNote[locale]}
+                </p>
+              </>
+            ) : (
+              <p className="italic opacity-60">{t.noAllergens[locale]}</p>
+            )}
+          </Section>
+
+          <Section title={t.nutrition[locale]}>
+            <NutritionTable
+              nutrition={item.nutrition}
+              locale={locale}
+              serving={serving}
+              abv={item.abv}
+            />
+          </Section>
+        </div>
       </div>
     </dialog>
   );

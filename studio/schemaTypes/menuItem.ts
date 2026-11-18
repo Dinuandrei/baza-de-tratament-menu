@@ -1,5 +1,6 @@
 import {defineField, defineType} from 'sanity'
 import {orderRankField, orderRankOrdering} from '@sanity/orderable-document-list'
+import {ALLERGENS} from './allergens'
 
 /** Must stay in sync with `itemIconNames` in the app's src/lib/icons.ts */
 const ICONS = [
@@ -100,6 +101,53 @@ export default defineType({
       type: 'reference',
       to: [{type: 'category'}],
       validation: (Rule) => Rule.required(),
+    }),
+    // --- Detalii produs: ce se vede în popup-ul „Vezi detalii” ---
+    defineField({
+      name: 'ingredients',
+      title: 'Ingrediente',
+      type: 'localizedList',
+      description:
+        'Lista de ingrediente, pe limbi. Lasă gol dacă nu vrei să apari cu lista — popup-ul scrie „Nu există ingrediente listate”.',
+    }),
+    defineField({
+      name: 'allergens',
+      title: 'Alergeni declarați (UE 14)',
+      type: 'array',
+      of: [{type: 'string'}],
+      options: {layout: 'grid', list: [...ALLERGENS]},
+      description:
+        'Obligatoriu legal pentru orice produs servit (Reg. UE 1169/2011). Alege doar ce conține produsul; lasă gol doar dacă nu conține niciunul.',
+    }),
+    defineField({
+      name: 'nutrition',
+      title: 'Valori nutriționale',
+      type: 'object',
+      options: {collapsible: true, collapsed: true, columns: 2},
+      description:
+        'Valori orientative per porție. Completează doar ce știi — rândurile goale nu apar.',
+      fields: [
+        defineField({name: 'calories', title: 'Calorii (kcal)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'fat', title: 'Grăsimi (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'saturatedFat', title: 'din care saturate (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'carbohydrates', title: 'Carbohidrați (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'sugar', title: 'din care zaharuri (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'protein', title: 'Proteine (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+        defineField({name: 'salt', title: 'Sare (g)', type: 'number', validation: (Rule) => Rule.min(0)}),
+      ],
+    }),
+    defineField({
+      name: 'serving',
+      title: 'Porție',
+      type: 'localizedString',
+      description: 'Ex. „330 ml”, „200 g”, „1 buc”. Opțional.',
+    }),
+    defineField({
+      name: 'abv',
+      title: 'Alcool (% vol)',
+      type: 'number',
+      description: 'Doar la băuturile alcoolice, ex. 4.2 sau 40.',
+      validation: (Rule) => Rule.min(0).max(96),
     }),
   ],
   preview: {

@@ -1,5 +1,14 @@
 import { createClient } from "@sanity/client";
-import { categories as staticCategories, type Category, type Item, type Localized, type Tag } from "@/data/menu";
+import {
+  categories as staticCategories,
+  type AllergenId,
+  type Category,
+  type Item,
+  type Localized,
+  type Nutrition,
+  type Tag,
+} from "@/data/menu";
+import { isAllergenId } from "@/lib/allergens";
 import { itemIconNames, type ItemIconName } from "@/lib/icons";
 import { locales, type Locale } from "@/lib/i18n";
 
@@ -17,6 +26,7 @@ const client = createClient({
 });
 
 type LocaleMap = Partial<Record<Locale, string>> | null | undefined;
+type LocaleList = Partial<Record<Locale, string[]>> | null | undefined;
 
 type ItemDoc = {
   _id: string;
@@ -25,6 +35,11 @@ type ItemDoc = {
   price: number | null;
   tags: string[] | null;
   icon: string | null;
+  ingredients: LocaleList;
+  allergens: string[] | null;
+  nutrition: Nutrition | null;
+  serving: LocaleMap;
+  abv: number | null;
 };
 
 type CategoryDoc = {
@@ -59,6 +74,35 @@ function partial(value: LocaleMap): Partial<Localized> | undefined {
   return Object.keys(output).length > 0 ? output : undefined;
 }
 
+/** Same idea for the ingredient lists (one array per locale). */
+function partialLists(value: LocaleList): Partial<Record<Locale, string[]>> | undefined {
+  if (!value) return undefined;
+  const output: Partial<Record<Locale, string[]>> = {};
+  for (const locale of locales) {
+    const list = value[locale]?.filter((entry) => typeof entry === "string" && entry.trim());
+    if (list && list.length > 0) output[locale] = list;
+  }
+  return Object.keys(output).length > 0 ? output : undefined;
+}
+
+/** Unknown ids are dropped so a stale Studio value can never break the pills. */
+function allergensFor(value: string[] | null): AllergenId[] | undefined {
+  const list = (value ?? []).filter(isAllergenId);
+  return list.length > 0 ? list : undefined;
+}
+
+/** Drop empty numbers so the popup skips rows instead of printing “undefined”. */
+function nutritionFor(value: Nutrition | null): Nutrition | undefined {
+  if (!value) return undefined;
+  const output: Nutrition = {};
+  for (const [key, amount] of Object.entries(value)) {
+    if (typeof amount === "number" && Number.isFinite(amount)) {
+      output[key as keyof Nutrition] = amount;
+    }
+  }
+  return Object.keys(output).length > 0 ? output : undefined;
+}
+
 const KNOWN_TAGS: Tag[] = ["na", "spicy", "new"];
 
 function iconFor(value: string | null): ItemIconName {
@@ -76,6 +120,11 @@ function toItem(doc: ItemDoc): Item {
     desc: partial(doc.description),
     price: typeof doc.price === "number" ? doc.price : undefined,
     tags: doc.tags?.filter((tag): tag is Tag => KNOWN_TAGS.includes(tag as Tag)),
+    ingredients: partialLists(doc.ingredients),
+    allergens: allergensFor(doc.allergens),
+    nutrition: nutritionFor(doc.nutrition),
+    serving: partial(doc.serving),
+    abv: typeof doc.abv === "number" ? doc.abv : undefined,
   };
 }
 
@@ -89,7 +138,12 @@ const CATEGORIES_QUERY = `*[_type == "category"] | order(orderRank asc, title.ro
     description,
     price,
     tags,
-    icon
+    icon,
+    ingredients,
+    allergens,
+    nutrition,
+    serving,
+    abv
   }
 }`;
 
