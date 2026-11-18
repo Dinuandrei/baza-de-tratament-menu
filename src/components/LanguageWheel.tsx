@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LocaleFlag } from "@/components/Flags";
 import { defaultLocale, isLocale, localeLabels, locales, t, type Locale } from "@/lib/i18n";
@@ -240,14 +241,16 @@ export function LanguageWheel() {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={confirm}
-        disabled={!ready}
-        className="mt-7 rounded-full bg-brand px-10 py-4 text-lg font-black uppercase tracking-tight text-ink transition-transform hover:scale-[1.03] active:scale-100 disabled:opacity-70"
+      {/* A real link, not a router.push: crawlable, middle-clickable, and it
+          navigates before hydration finishes. The handler only records the
+          choice in a cookie, exactly like the keyboard path does. */}
+      <Link
+        href={`/${selected}`}
+        onClick={() => persist(selected)}
+        className="mt-7 rounded-full bg-brand px-10 py-4 text-lg font-black uppercase tracking-tight text-ink transition-transform hover:scale-[1.03] active:scale-100"
       >
         {t.seeMenu[selected]} →
-      </button>
+      </Link>
 
       {/* Postel's Law for humans: without JS there is still a menu. */}
       <noscript>

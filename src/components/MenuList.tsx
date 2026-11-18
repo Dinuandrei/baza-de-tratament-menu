@@ -38,11 +38,30 @@ function TagChips({ tags, locale }: { tags: Tag[]; locale: Locale }) {
   );
 }
 
+/** Romanian prices read “12,50”, English ones “12.50” — never “12.5”. */
+const priceFormatters = new Map<string, Intl.NumberFormat>();
+
+function formatPrice(value: number, locale: Locale): string {
+  const integers = Number.isInteger(value);
+  const key = `${locale}:${integers}`;
+
+  let formatter = priceFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(locale === "en" ? "en-GB" : "ro-RO", {
+      minimumFractionDigits: integers ? 0 : 2,
+      maximumFractionDigits: 2,
+    });
+    priceFormatters.set(key, formatter);
+  }
+
+  return formatter.format(value);
+}
+
 function Price({ price, locale }: { price?: number; locale: Locale }) {
   if (typeof price === "number") {
     return (
       <span className="shrink-0 text-[17px] font-black tabular-nums text-brand">
-        {price}
+        {formatPrice(price, locale)}
         <span className="ml-1 text-[10px] font-bold uppercase tracking-wider text-muted">lei</span>
       </span>
     );

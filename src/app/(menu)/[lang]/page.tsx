@@ -34,14 +34,18 @@ export async function generateMetadata({
 
   return {
     title: titles[lang],
+    description: t.metaDescription[lang],
     alternates: {
       canonical: `/${lang}`,
       languages: Object.fromEntries(locales.map((l) => [l, `/${l}`])),
     },
     openGraph: {
       title: titles[lang],
-      description: t.pricesNote[lang],
+      description: t.metaDescription[lang],
       locale: lang,
+      // Next replaces nested metadata objects instead of merging them, so the
+      // shared og:image has to be repeated here or the preview card loses it.
+      images: ["/brand/og.png"],
     },
   };
 }
@@ -63,7 +67,9 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
       </a>
 
       <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-3">
+        {/* One row on every phone width; it only wraps when the viewport is so
+            narrow (≈130% zoom) that a single row cannot fit at all. */}
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 max-[300px]:flex-wrap max-[300px]:gap-y-1 sm:gap-3 sm:py-3">
           <Link
             href="/"
             aria-label={t.back[lang]}
@@ -72,7 +78,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
           >
             <Logo />
           </Link>
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             <span className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-muted sm:block">
               {t.language[lang]}
             </span>
@@ -86,7 +92,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
       </header>
 
       <main id="meniu" className="mx-auto max-w-3xl px-4 pb-16 pt-6">
-        <div className="mb-5 flex items-baseline justify-between gap-3">
+        <div className="mb-5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h1 className="text-3xl font-black uppercase tracking-tight sm:text-4xl">
             {t.menu[lang]}
           </h1>

@@ -112,13 +112,19 @@ function iconFor(value: string | null): ItemIconName {
     : "hot-mug";
 }
 
-function toItem(doc: ItemDoc): Item {
+function toItem(doc: ItemDoc): Item | null {
+  // A document with no name in any locale would be listed under its internal id
+  // ("edge-noname"), which looks like a bug to the reader — skip it instead.
+  const sourceName = doc.name?.ro ?? doc.name?.en ?? doc.name?.bg ?? doc.name?.sr;
+  if (!sourceName || !sourceName.trim()) return null;
+
   return {
     id: slugOf(doc._id),
     icon: iconFor(doc.icon),
-    name: localized(doc.name, slugOf(doc._id)),
+    name: localized(doc.name, sourceName),
     desc: partial(doc.description),
-    price: typeof doc.price === "number" ? doc.price : undefined,
+    // A negative price is a typo, not an offer: show “—” rather than “-10 lei”.
+    price: typeof doc.price === "number" && doc.price >= 0 ? doc.price : undefined,
     tags: doc.tags?.filter((tag): tag is Tag => KNOWN_TAGS.includes(tag as Tag)),
     ingredients: partialLists(doc.ingredients),
     allergens: allergensFor(doc.allergens),
@@ -168,12 +174,25 @@ export async function getCategories(): Promise<Category[]> {
       return staticCategories;
     }
 
-    return docs.map((doc) => ({
-      id: slugOf(doc._id),
-      name: localized(doc.title, slugOf(doc._id)),
-      note: partial(doc.note),
-      items: (doc.items ?? []).map(toItem),
-    }));
+    return docs
+      .map((doc) => ({
+        doc,
+        // A category with no title anywhere would be headed by its id; the same
+        // goes for an empty section left behind after its last product moved.
+        titled: Boolean(
+          (doc.title?.ro ?? doc.title?.en ?? doc.title?.bg ?? doc.title?.sr ?? "").trim(),
+        ),
+        items: (doc.items ?? [])
+          .map(toItem)
+          .filter((item): item is Item => item !== null),
+      }))
+      .filter(({ titled, items }) => titled && items.length > 0)
+      .map(({ doc, items }) => ({
+        id: slugOf(doc._id),
+        name: localized(doc.title, slugOf(doc._id)),
+        note: partial(doc.note),
+        items,
+      }));
   } catch (error) {
     console.error("[sanity] menu fetch failed — serving the bundled menu", error);
     return staticCategories;

@@ -55,6 +55,20 @@ export const t = {
     bg: "Език",
     sr: "Језик",
   },
+  /** <meta name="description"> — Romanian used to leak into every locale. */
+  metaDescription: {
+    ro: "Meniul digital #baza_de_tratament: cafea, băuturi calde, long drinks, bere și mâncare. Patru limbi, prețuri cu TVA inclus.",
+    en: "The #baza_de_tratament digital menu: coffee, hot drinks, long drinks, beer and food. Four languages, VAT-inclusive prices.",
+    bg: "Дигиталното меню на #baza_de_tratament: кафе, топли напитки, лонг дринкове, бира и храна. Четири езика, цени с включено ДДС.",
+    sr: "Дигитални мени #baza_de_tratament: кафа, топли напици, лонг дринкови, пиво и храна. Четири језика, цене са укљученим ПДВ-ом.",
+  },
+  /** Landmark name for the language switcher, so a screen reader hears it per locale. */
+  languageLabel: {
+    ro: "Limba meniului",
+    en: "Menu language",
+    bg: "Език на менюто",
+    sr: "Језик менија",
+  },
   pricesNote: {
     ro: "Prețurile sunt în lei, cu TVA inclus.",
     en: "Prices are in lei (RON), VAT included.",
