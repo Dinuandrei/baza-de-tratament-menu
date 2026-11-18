@@ -101,7 +101,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
         <MenuList categories={categories} locale={lang} />
 
         <footer className="mt-10 flex flex-col items-center gap-3 border-t border-line pt-6 text-center">
-          <Logo />
+          <Logo size="md" />
           <p className="max-w-xs text-[11px] leading-relaxed text-muted">{t.pricesNote[lang]}</p>
           <p className="text-[10px] uppercase tracking-[0.25em] text-muted/50">
             {locales.map((l) => `/${l}`).join(" · ")}
