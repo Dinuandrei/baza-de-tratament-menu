@@ -152,8 +152,17 @@ export default defineType({
         'Scris automat de scriptul de traducere: amprenta textului românesc din care s-au făcut traducerile. Dacă modifici româna, amprenta nu mai corespunde și traducerea poate fi refăcută fără să ghicești ce e vechi.',
       fields: [
         defineField({name: 'hash', title: 'Amprentă', type: 'string', readOnly: true}),
+        defineField({name: 'descriptionHash', title: 'Amprentă descriere', type: 'string', readOnly: true}),
+        defineField({name: 'ingredientsHash', title: 'Amprentă ingrediente', type: 'string', readOnly: true}),
         defineField({name: 'at', title: 'Tradus la', type: 'datetime', readOnly: true}),
         defineField({name: 'provider', title: 'Furnizor', type: 'string', readOnly: true}),
+        defineField({
+          name: 'status',
+          title: 'Stare',
+          type: 'string',
+          readOnly: true,
+          description: 'ok, sau ultima eroare primită de la serviciul de traducere.',
+        }),
       ],
     }),
     defineField({

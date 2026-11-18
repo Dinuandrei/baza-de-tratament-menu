@@ -16,7 +16,13 @@
  */
 import { getCliClient } from "sanity/cli";
 import { BRANDS } from "../../src/lib/translate";
-import { needsTranslation, sourceHash, TARGET_LOCALES } from "../../src/lib/translation-source";
+import {
+  descriptionHash,
+  ingredientsHash,
+  needsTranslation,
+  sourceHash,
+  TARGET_LOCALES,
+} from "../../src/lib/translation-source";
 import type { Locale } from "../../src/lib/i18n";
 
 const client = getCliClient({ apiVersion: "2024-03-27" });
@@ -170,8 +176,13 @@ async function main() {
           translationSource: {
             _type: "translationSource",
             hash: sourceHash(doc ?? {}),
+            // Same per-field fingerprints the webhook uses, so a later publish
+            // does not retranslate what this run already did.
+            descriptionHash: descriptionHash(doc ?? {}),
+            ingredientsHash: ingredientsHash(doc ?? {}),
             at: new Date().toISOString(),
             provider: PROVIDER,
+            status: "ok",
           },
         }),
       );

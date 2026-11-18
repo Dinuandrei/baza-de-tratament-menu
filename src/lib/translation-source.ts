@@ -11,27 +11,41 @@ export type TranslatableItem = {
 };
 
 /**
- * A fingerprint of the Romanian source. Stored next to the translations so a
- * later “did the source change?” check is a string comparison instead of a
- * guess — that is what makes an automatic webhook safe (it writes nothing when
- * the fingerprint matches, so it cannot trigger itself).
- *
- * FNV-1a: tiny, stable, no crypto import, works in the browser and in Node.
+ * FNV-1a over a canonical string: tiny, stable, no crypto import, usable in the
+ * browser, in a route handler and in a Sanity script.
  */
-export function sourceHash(item: TranslatableItem): string {
-  const canonical = JSON.stringify([
-    item.name?.ro ?? "",
-    item.description?.ro ?? "",
-    item.ingredients?.ro ?? [],
-    item.serving?.ro ?? "",
-  ]);
-
+function fnv(value: string): string {
   let hash = 0x811c9dc5;
-  for (let index = 0; index < canonical.length; index += 1) {
-    hash ^= canonical.charCodeAt(index);
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
   return hash.toString(16).padStart(8, "0");
+}
+
+/** Fingerprint of everything translatable, used as the overall “is it done” flag. */
+export function sourceHash(item: TranslatableItem): string {
+  return fnv(
+    JSON.stringify([
+      item.name?.ro ?? "",
+      item.description?.ro ?? "",
+      item.ingredients?.ro ?? [],
+      item.serving?.ro ?? "",
+    ]),
+  );
+}
+
+/**
+ * Per-field fingerprints. Kept apart on purpose: editing the Romanian
+ * description must not throw away a hand-corrected ingredient translation, and
+ * the other way round. A field is retranslated only when its own source changed.
+ */
+export function descriptionHash(item: TranslatableItem): string {
+  return fnv(item.description?.ro ?? "");
+}
+
+export function ingredientsHash(item: TranslatableItem): string {
+  return fnv(JSON.stringify(item.ingredients?.ro ?? []));
 }
 
 /**
