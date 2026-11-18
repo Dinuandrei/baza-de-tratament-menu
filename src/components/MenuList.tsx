@@ -150,7 +150,7 @@ function NutritionTable({
               {t.serving[locale]}: <span className="text-white/80">{serving}</span>
             </span>
           ) : null}
-          {abv !== undefined ? (
+          {abv !== undefined && abv >= 0 ? (
             <span>
               {t.abv[locale]}: <span className="text-white/80">{abv}% vol</span>
             </span>
@@ -184,6 +184,10 @@ function NutritionTable({
  * inert background, Esc-to-close and the ::backdrop layer for free — all of
  * which hand-rolled modals get wrong.
  */
+/** Everything inside a modal that can take focus — used by the Tab wrap. */
+const FOCUSABLE =
+  'a[href], button:not([disabled]), summary, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 function DetailsDialog({
   item,
   categoryId,
@@ -196,6 +200,7 @@ function DetailsDialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const desc = descFor(item, locale);
   const ingredients = ingredientsFor(item, locale);
@@ -205,7 +210,18 @@ function DetailsDialog({
     const dialog = ref.current;
     if (!dialog) return;
 
+    // Remember the row that opened the popup: unmounting a <dialog> skips the
+    // browser’s own focus restore, so Esc would otherwise drop the caret on
+    // <body> and the next Tab would restart from the top of the page.
+    const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
     dialog.showModal();
+
+    // Deliberately NOT `autoFocus`: with the attribute Chrome scrolls the page to
+    // the end of the document to “reveal” the button before the dialog is
+    // promoted to the top layer (scrolled 1500 → 2670 = max scroll in testing).
+    // Focusing by hand afterwards, with preventScroll, keeps the reader in place.
+    closeRef.current?.focus({ preventScroll: true });
 
     // Native dialogs do not lock the page behind them.
     const previousOverflow = document.body.style.overflow;
@@ -213,6 +229,7 @@ function DetailsDialog({
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, []);
 
@@ -225,6 +242,31 @@ function DetailsDialog({
         // Clicking the backdrop lands on the <dialog> element itself.
         if (event.target === ref.current) onClose();
       }}
+      onKeyDown={(event) => {
+        // Chrome lets Tab step out of a modal dialog onto <body> for one keystroke,
+        // which loses the focus ring; wrap at both ends instead.
+        if (event.key !== "Tab") return;
+
+        const dialog = ref.current;
+        if (!dialog) return;
+
+        const items = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+          (element) => element.getClientRects().length > 0,
+        );
+        if (items.length === 0) return;
+
+        const first = items[0];
+        const last = items[items.length - 1];
+        const current = document.activeElement;
+
+        if (event.shiftKey && (current === first || current === dialog)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && current === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
       className="product-dialog m-auto flex max-h-[86dvh] w-[calc(100%-2rem)] max-w-sm flex-col overflow-hidden overscroll-contain rounded-3xl border border-line bg-surface p-0 text-white shadow-2xl"
     >
       <div className="relative shrink-0">
@@ -233,7 +275,7 @@ function DetailsDialog({
           <img
             src={item.image}
             alt={item.name[locale]}
-            className="h-48 w-full object-cover sm:h-56"
+            className="h-48 max-h-[38dvh] w-full object-cover sm:h-56"
             loading="lazy"
           />
         ) : (
@@ -241,14 +283,14 @@ function DetailsDialog({
             name={item.icon}
             categoryId={categoryId}
             label={item.name[locale]}
-            className="h-48 w-full sm:h-56"
+            className="h-48 max-h-[38dvh] w-full sm:h-56"
           />
         )}
 
         <button
+          ref={closeRef}
           type="button"
           onClick={onClose}
-          autoFocus
           aria-label={t.close[locale]}
           className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-ink/70 text-lg leading-none text-white/80 backdrop-blur-sm transition-colors hover:border-brand/60 hover:text-white"
         >
@@ -256,7 +298,7 @@ function DetailsDialog({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
+      <div className="product-body min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 id={titleId} className="text-lg font-black leading-tight text-white">
             {item.name[locale]}
@@ -286,7 +328,7 @@ function DetailsDialog({
             {item.allergens && item.allergens.length > 0 ? (
               <>
                 <AllergenPills ids={item.allergens} locale={locale} />
-                <p className="mt-2 text-[10px] leading-relaxed text-muted/60">
+                <p className="mt-2 text-[10px] leading-relaxed text-muted">
                   {t.allergenNote[locale]}
                 </p>
               </>

@@ -47,6 +47,23 @@
     animation: product-dialog-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* The text area is the only scroller; keep its bar inside the rounded card
+     instead of letting the OS paint a light strip over the corner. */
+  .product-body {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 122 0 / 0.35) transparent;
+  }
+  .product-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  .product-body::-webkit-scrollbar-thumb {
+    background-color: rgb(255 122 0 / 0.35);
+    border-radius: 9999px;
+  }
+  .product-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   @keyframes product-dialog-in {
     from {
       opacity: 0;

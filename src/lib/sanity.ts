@@ -91,12 +91,12 @@ function allergensFor(value: string[] | null): AllergenId[] | undefined {
   return list.length > 0 ? list : undefined;
 }
 
-/** Drop empty numbers so the popup skips rows instead of printing “undefined”. */
+/** Drop empty and impossible numbers so the popup never prints “-5 kcal”. */
 function nutritionFor(value: Nutrition | null): Nutrition | undefined {
   if (!value) return undefined;
   const output: Nutrition = {};
   for (const [key, amount] of Object.entries(value)) {
-    if (typeof amount === "number" && Number.isFinite(amount)) {
+    if (typeof amount === "number" && Number.isFinite(amount) && amount >= 0) {
       output[key as keyof Nutrition] = amount;
     }
   }
@@ -124,7 +124,7 @@ function toItem(doc: ItemDoc): Item {
     allergens: allergensFor(doc.allergens),
     nutrition: nutritionFor(doc.nutrition),
     serving: partial(doc.serving),
-    abv: typeof doc.abv === "number" ? doc.abv : undefined,
+    abv: typeof doc.abv === "number" && doc.abv >= 0 ? doc.abv : undefined,
   };
 }
 
