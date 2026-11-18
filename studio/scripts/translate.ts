@@ -15,7 +15,7 @@
  * the second run is a no-op.
  */
 import { getCliClient } from "sanity/cli";
-import { translateTexts, BRANDS } from "../../src/lib/translate";
+import { BRANDS } from "../../src/lib/translate";
 import { needsTranslation, sourceHash, TARGET_LOCALES } from "../../src/lib/translation-source";
 import type { Locale } from "../../src/lib/i18n";
 
@@ -29,6 +29,27 @@ try {
   process.loadEnvFile("../.env.local");
 } catch {
   // No .env.local yet (or an older Node) — the env vars below still work.
+}
+
+/**
+ * Both adapters share one contract, so the engine is an env choice.
+ * Google Cloud Translation is not an option here: it rejects API keys outright
+ * (v2 and v3 both answer 401), so the Google path is Gemini.
+ */
+const PROVIDER: "azure" | "gemini" =
+  process.env.TRANSLATE_PROVIDER === "gemini" ||
+  (!process.env.AZURE_TRANSLATOR_KEY &&
+    (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY))
+    ? "gemini"
+    : "azure";
+
+async function loadTranslator() {
+  if (PROVIDER === "gemini") {
+    const { translateTexts } = await import("../../src/lib/translate-gemini");
+    return translateTexts;
+  }
+  const { translateTexts } = await import("../../src/lib/translate");
+  return translateTexts as (texts: string[], to: string, from?: string) => Promise<string[]>;
 }
 
 type Doc = {
@@ -95,6 +116,8 @@ async function main() {
   }
 
   // One request per locale keeps the batches tight and the retries simple.
+  const translateTexts = await loadTranslator();
+  console.log(`Provider: ${PROVIDER}`);
   let written = 0;
   for (const locale of TARGET_LOCALES) {
     const localeJobs = jobs.filter((job) => job.locale === locale);
@@ -150,7 +173,7 @@ async function main() {
             _type: "translationSource",
             hash: sourceHash(doc ?? {}),
             at: new Date().toISOString(),
-            provider: "azure",
+            provider: PROVIDER,
           },
         }),
       );
