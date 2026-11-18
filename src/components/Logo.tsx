@@ -13,8 +13,8 @@ type LogoProps = {
  * root with the grey lifted out, so it sits on the dark theme without a box.
  */
 export function Logo({ size = "sm", className = "" }: LogoProps) {
-  // The header one is a notch smaller on the narrowest phones so the language
-  // chips keep their space without squeezing the artwork out of proportion.
+  // Heights are per breakpoint because the header row is the tight one: at 320px
+  // the artwork takes 140 of the 305px available and the language chips get 125.
   const height =
     size === "lg" ? "h-20 sm:h-28" : size === "md" ? "h-14" : "h-11 min-[360px]:h-14 sm:h-16";
 
