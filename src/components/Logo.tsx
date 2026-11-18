@@ -16,7 +16,11 @@ export function Logo({ size = "sm", className = "" }: LogoProps) {
   // Heights are per breakpoint because the header row is the tight one: at 320px
   // the artwork takes 140 of the 305px available and the language chips get 125.
   const height =
-    size === "lg" ? "h-20 min-[360px]:h-24 sm:h-32" : size === "md" ? "h-14" : "h-11 min-[360px]:h-14 sm:h-16";
+    size === "lg"
+      ? "h-20 min-[360px]:h-24 sm:h-32"
+      : size === "md"
+        ? "h-14"
+        : "h-11 min-[360px]:h-14 min-[390px]:h-16 sm:h-20";
 
   return (
     <Image
