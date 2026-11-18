@@ -11,9 +11,11 @@ export default function Home() {
           keeps it centred and undistorted in whatever space is left. */}
       <header className="flex w-full flex-col items-center gap-4 px-2">
         <Logo size="lg" />
-        <p className="px-4 text-center text-[11px] font-bold uppercase tracking-[0.3em] text-muted">
+        {/* The page's real heading: axe flags a document with no h1, and the
+            tagline is what the eye lands on below the artwork anyway. */}
+        <h1 className="px-4 text-center text-[11px] font-bold uppercase tracking-[0.3em] text-muted">
           meniu digital · digital menu
-        </p>
+        </h1>
       </header>
 
       {/* justify-center, not just w-full: the wheel is a block-level flex child

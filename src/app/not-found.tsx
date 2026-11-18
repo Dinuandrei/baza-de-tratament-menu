@@ -17,6 +17,15 @@ export default function NotFound() {
       lang="ro"
       className="poster-bg flex min-h-dvh flex-col items-center justify-center gap-6 bg-ink px-5 text-center text-white antialiased"
     >
+      {/* Next supplies the document for this route but gives it neither a title
+          nor a lang, and axe flags both (serious). React 19 hoists <title>, and
+          the inline script sets lang before paint — the layout chain that would
+          normally do this does not wrap an unmatched path. */}
+      <title>#baza_de_tratament — pagina nu există</title>
+      <script
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: "document.documentElement.lang='ro'" }}
+      />
       <Link href="/" className="flex w-full justify-center" aria-label="#baza_de_tratament">
         <Logo size="lg" />
       </Link>
