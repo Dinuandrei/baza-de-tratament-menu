@@ -93,9 +93,9 @@ function DetailsDialog({
         // Clicking the backdrop lands on the <dialog> element itself.
         if (event.target === ref.current) onClose();
       }}
-      className="product-dialog mx-0 mb-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-hidden overscroll-contain rounded-t-3xl border border-line bg-surface p-0 text-white shadow-2xl sm:m-auto sm:w-[calc(100%-2rem)] sm:max-w-sm sm:rounded-3xl"
+      className="product-dialog m-auto flex max-h-[86dvh] w-[calc(100%-2rem)] max-w-sm flex-col overflow-hidden overscroll-contain rounded-3xl border border-line bg-surface p-0 text-white shadow-2xl"
     >
-      <div className="relative">
+      <div className="relative shrink-0">
         {item.image ? (
           // eslint-disable-next-line @next/next/no-img-element -- Sanity/remote images arrive in the next step
           <img
@@ -124,7 +124,7 @@ function DetailsDialog({
         </button>
       </div>
 
-      <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
         <div className="flex items-baseline justify-between gap-3">
           <h2 id={titleId} className="text-lg font-black leading-tight text-white">
             {item.name[locale]}
