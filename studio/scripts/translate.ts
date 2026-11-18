@@ -22,6 +22,15 @@ import type { Locale } from "../../src/lib/i18n";
 const client = getCliClient({ apiVersion: "2024-03-27" });
 const DRY_RUN = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true";
 
+// Read the key from ../.env.local (repo root) when it is not already in the
+// environment, so the secret never ends up in the shell history. Run this from
+// the studio/ directory — the path is relative to it.
+try {
+  process.loadEnvFile("../.env.local");
+} catch {
+  // No .env.local yet (or an older Node) — the env vars below still work.
+}
+
 type Doc = {
   _id: string;
   name?: Partial<Record<Locale, string>>;
