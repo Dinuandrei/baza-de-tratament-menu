@@ -16,7 +16,9 @@ export default function Home() {
         </p>
       </header>
 
-      <div className="w-full px-5">
+      {/* justify-center, not just w-full: the wheel is a block-level flex child
+          capped at max-w-xs, so in a plain block wrapper it sits 15px left of centre. */}
+      <div className="flex w-full justify-center px-5">
         <LanguageWheel />
       </div>
 
