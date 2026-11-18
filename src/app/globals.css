@@ -36,6 +36,36 @@
     outline-offset: 3px;
     border-radius: 6px;
   }
+
+  /* Product popup (native <dialog>). */
+  .product-dialog::backdrop {
+    background-color: rgb(8 8 11 / 0.82);
+    backdrop-filter: blur(6px);
+  }
+
+  .product-dialog[open] {
+    animation: product-dialog-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes product-dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-dialog[open] {
+      animation: none;
+    }
+    html {
+      scroll-behavior: auto;
+    }
+  }
 }
 
 /* Poster-style background: soft orange glow + faint dot grid. */

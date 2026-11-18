@@ -67,6 +67,18 @@ export const t = {
     bg: "при заявка",
     sr: "на упит",
   },
+  details: {
+    ro: "Vezi detalii",
+    en: "See details",
+    bg: "Вижте детайли",
+    sr: "Види детаље",
+  },
+  close: {
+    ro: "Închide",
+    en: "Close",
+    bg: "Затвори",
+    sr: "Затвори",
+  },
   back: {
     ro: "Schimbă limba",
     en: "Change language",

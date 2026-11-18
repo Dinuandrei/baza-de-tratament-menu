@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.sanity/
+*.local
+.env*
+!.env.example
