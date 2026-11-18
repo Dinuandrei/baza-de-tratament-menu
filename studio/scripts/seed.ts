@@ -7,6 +7,7 @@
  * re-running updates instead of duplicating. Safe to run after a data change.
  */
 import {getCliClient} from 'sanity/cli'
+import {LexoRank} from 'lexorank'
 import {categories} from '../../src/data/menu'
 
 const client = getCliClient({apiVersion: '2024-03-27'})
@@ -40,12 +41,24 @@ function localizeLists(
   return Object.keys(output).length > 0 ? output : undefined
 }
 
-const orderRank = (index: number) => String(index).padStart(4, '0')
+/**
+ * The orderable plugin parses orderRank with LexoRank.parse(); a plain "0000"
+ * string throws, every document then falls back to LexoRank.min() and dragging
+ * fails with "rank between issues with same rank". Always hand it real ranks.
+ */
+function rankGenerator() {
+  let rank = LexoRank.min()
+  return () => {
+    rank = rank.genNext()
+    return rank.toString()
+  }
+}
 
 type SeededDoc = {_id: string; _type: string; [key: string]: unknown}
 
 async function main() {
   const documents: SeededDoc[] = []
+  const orderRank = rankGenerator()
 
   categories.forEach((category, categoryIndex) => {
     documents.push({
@@ -53,7 +66,7 @@ async function main() {
       _type: 'category',
       title: localize(category.name),
       ...(category.note ? {note: localize(category.note)} : {}),
-      orderRank: orderRank(categoryIndex),
+      orderRank: orderRank(),
     })
 
     category.items.forEach((item, itemIndex) => {
@@ -66,7 +79,7 @@ async function main() {
         ...(item.tags?.length ? {tags: item.tags} : {}),
         icon: item.icon,
         category: {_type: 'reference', _ref: `category-${category.id}`},
-        orderRank: orderRank(itemIndex),
+        orderRank: orderRank(),
         // --- details shown in the “Vezi detalii” popup ---
         ...(item.ingredients ? {ingredients: localizeLists(item.ingredients)} : {}),
         ...(item.allergens?.length ? {allergens: item.allergens} : {}),
