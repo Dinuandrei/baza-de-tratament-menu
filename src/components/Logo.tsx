@@ -16,7 +16,7 @@ export function Logo({ size = "sm", className = "" }: LogoProps) {
   // The header one is a notch smaller on the narrowest phones so the language
   // chips keep their space without squeezing the artwork out of proportion.
   const height =
-    size === "lg" ? "h-20 sm:h-28" : size === "md" ? "h-14" : "h-10 min-[360px]:h-12 sm:h-14";
+    size === "lg" ? "h-20 sm:h-28" : size === "md" ? "h-14" : "h-11 min-[360px]:h-14 sm:h-16";
 
   return (
     <Image
