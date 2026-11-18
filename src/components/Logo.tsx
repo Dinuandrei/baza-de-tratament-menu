@@ -1,33 +1,28 @@
 import Image from "next/image";
 import logoFull from "../../public/brand/logo.png";
-import logoPill from "../../public/brand/logo-pill.png";
 
 type LogoProps = {
-  /**
-   * "sm" is the sticky header: only the sticker, because at 375px the full
-   * lockup would shrink the wordmark below a readable size.
-   * "md" adds the “empowered by” cat badge (footer).
-   * "lg" is the language wheel.
-   */
+  /** "sm" sticky header, "md" footer, "lg" language wheel. */
   size?: "sm" | "md" | "lg";
   className?: string;
 };
 
 /**
- * The printed sticker, as artwork rather than typeset text: `logo.png` is the
- * full lockup (pill + cat badge) cut out of the original flat-background JPG in
- * the project root, so it sits on the dark theme without a grey box.
+ * The printed sticker as artwork: the pill plus the “empowered by” cat badge, on
+ * every page. `logo.png` is the original flat-background JPG from the project
+ * root with the grey lifted out, so it sits on the dark theme without a box.
  */
 export function Logo({ size = "sm", className = "" }: LogoProps) {
-  const source = size === "sm" ? logoPill : logoFull;
+  // The header one is a notch smaller on the narrowest phones so the language
+  // chips keep their space without squeezing the artwork out of proportion.
   const height =
-    size === "lg" ? "h-20 sm:h-28" : size === "md" ? "h-14" : "h-12 sm:h-14";
+    size === "lg" ? "h-20 sm:h-28" : size === "md" ? "h-14" : "h-10 min-[360px]:h-12 sm:h-14";
 
   return (
     <Image
-      src={source}
+      src={logoFull}
       alt="#baza_de_tratament"
-      className={`w-auto select-none ${height} ${className}`}
+      className={`w-auto shrink-0 select-none ${height} ${className}`}
       // The header logo is above the fold on every page.
       priority={size === "sm"}
     />

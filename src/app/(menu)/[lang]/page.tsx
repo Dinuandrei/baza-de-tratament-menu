@@ -68,11 +68,11 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
             href="/"
             aria-label={t.back[lang]}
             title={localeLabels[lang]}
-            className="min-w-0 shrink"
+            className="shrink-0"
           >
             <Logo />
           </Link>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <span className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-muted sm:block">
               {t.language[lang]}
             </span>
