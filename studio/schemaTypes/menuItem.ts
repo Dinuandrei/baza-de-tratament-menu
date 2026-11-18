@@ -143,6 +143,20 @@ export default defineType({
       description: 'Ex. „330 ml”, „200 g”, „1 buc”. Opțional.',
     }),
     defineField({
+      name: 'translationSource',
+      title: 'Sursa traducerilor',
+      type: 'object',
+      readOnly: true,
+      options: {collapsible: true, collapsed: true},
+      description:
+        'Scris automat de scriptul de traducere: amprenta textului românesc din care s-au făcut traducerile. Dacă modifici româna, amprenta nu mai corespunde și traducerea poate fi refăcută fără să ghicești ce e vechi.',
+      fields: [
+        defineField({name: 'hash', title: 'Amprentă', type: 'string', readOnly: true}),
+        defineField({name: 'at', title: 'Tradus la', type: 'datetime', readOnly: true}),
+        defineField({name: 'provider', title: 'Furnizor', type: 'string', readOnly: true}),
+      ],
+    }),
+    defineField({
       name: 'abv',
       title: 'Alcool (% vol)',
       type: 'number',
