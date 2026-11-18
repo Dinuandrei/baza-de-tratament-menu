@@ -142,25 +142,23 @@ async function main() {
       cursor += count;
     }
 
-    const patches = new Map<string, Record<string, unknown>>();
+    const patches = new Map<string, Record<string, string | string[]>>();
     const touch = (id: string) => {
       const existing = patches.get(id) ?? {};
       patches.set(id, existing);
       return existing;
     };
 
+    // Write the locale as a PATH (`description.bg`), never by re-sending the whole
+    // object. Spreading a snapshot read at the start of the script would write the
+    // other locale's old value back and silently undo the previous pass — that is
+    // exactly what happened on the first run: sr's patch restored bg to Romanian.
     descriptions.forEach((job, index) => {
-      touch(job.id).description = {
-        ...(docs.find((doc) => doc._id === job.id)?.description ?? {}),
-        [locale]: descriptionResults[index],
-      };
+      touch(job.id)[`description.${locale}`] = descriptionResults[index];
     });
 
     for (const [id, list] of listsById) {
-      touch(id).ingredients = {
-        ...(docs.find((doc) => doc._id === id)?.ingredients ?? {}),
-        [locale]: list,
-      };
+      touch(id)[`ingredients.${locale}`] = list;
     }
 
     const transaction = client.transaction();

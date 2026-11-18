@@ -405,6 +405,12 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
     return null;
   };
 
+  // How many history pops we asked for ourselves and have not seen yet.
+  // `history.back()` is asynchronous: if the reader closes one product and opens
+  // the next within the same tick, the pop lands AFTER the new popup mounted and
+  // would close/reopen it. Counting our own pops lets us ignore them.
+  const pendingPopRef = useRef(0);
+
   const openDetails = (item: Item, categoryId: string) => {
     // One history entry per opened product, with the SAME url, so the phone’s
     // back gesture closes the popup instead of walking out of the menu.
@@ -416,13 +422,21 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
     // Close first (instant), then drop the entry we pushed — leaving it behind
     // would make the next Back press do nothing visible.
     setActive(null);
-    if (window.history.state?.productDialog) window.history.back();
+    if (window.history.state?.productDialog) {
+      pendingPopRef.current += 1;
+      window.history.back();
+    }
   };
 
   useEffect(() => {
     // Back closes; Forward reopens the same product, because the entry carries
-    // its id.
+    // its id. Pops we triggered ourselves are already reflected in state.
     const onPopState = () => {
+      if (pendingPopRef.current > 0) {
+        pendingPopRef.current -= 1;
+        return;
+      }
+
       const id = window.history.state?.productDialog;
       const found = typeof id === "string" ? findByItemId(id) : null;
       setActive(found);
