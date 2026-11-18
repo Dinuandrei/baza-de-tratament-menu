@@ -17,7 +17,7 @@ export function Logo({ size = "sm", className = "" }: LogoProps) {
   // the artwork takes 140 of the 305px available and the language chips get 125.
   const height =
     size === "lg"
-      ? "h-20 min-[360px]:h-24 sm:h-32"
+      ? "h-[92px] min-[380px]:h-[110px] sm:h-[147px]"
       : size === "md"
         ? "h-14"
         : "h-11 min-[360px]:h-14 min-[390px]:h-16 sm:h-20";
@@ -26,7 +26,7 @@ export function Logo({ size = "sm", className = "" }: LogoProps) {
     <Image
       src={logoFull}
       alt="#baza_de_tratament"
-      className={`w-auto shrink-0 select-none ${height} ${className}`}
+      className={`w-auto max-w-full shrink-0 select-none object-contain ${height} ${className}`}
       // The header logo is above the fold on every page.
       priority={size === "sm"}
     />
