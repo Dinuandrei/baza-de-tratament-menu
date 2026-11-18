@@ -53,10 +53,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
   const categories = await getCategories();
 
   return (
-    // The root layout owns <html>, so it cannot know the segment and ships lang="ro"
-    // on every route. Declaring the language here scopes it to the page content,
-    // which is what screen readers actually use. (Proper fix: [lang] as root layout.)
-    <div className="poster-bg min-h-dvh" lang={lang}>
+    <div className="poster-bg min-h-dvh">
       {/* Paradox of the Active User: no manual, no onboarding — jump straight to the list. */}
       <a
         href="#meniu"

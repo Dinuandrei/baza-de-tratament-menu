@@ -397,6 +397,42 @@ function MenuItem({
 export function MenuList({ categories, locale }: { categories: Category[]; locale: Locale }) {
   const [active, setActive] = useState<{ item: Item; categoryId: string } | null>(null);
 
+  const findByItemId = (id: string): { item: Item; categoryId: string } | null => {
+    for (const category of categories) {
+      const item = category.items.find((entry) => entry.id === id);
+      if (item) return { item, categoryId: category.id };
+    }
+    return null;
+  };
+
+  const openDetails = (item: Item, categoryId: string) => {
+    // One history entry per opened product, with the SAME url, so the phone’s
+    // back gesture closes the popup instead of walking out of the menu.
+    window.history.pushState({ productDialog: item.id }, "");
+    setActive({ item, categoryId });
+  };
+
+  const closeDetails = () => {
+    // Close first (instant), then drop the entry we pushed — leaving it behind
+    // would make the next Back press do nothing visible.
+    setActive(null);
+    if (window.history.state?.productDialog) window.history.back();
+  };
+
+  useEffect(() => {
+    // Back closes; Forward reopens the same product, because the entry carries
+    // its id.
+    const onPopState = () => {
+      const id = window.history.state?.productDialog;
+      const found = typeof id === "string" ? findByItemId(id) : null;
+      setActive(found);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- findByItemId is derived from categories
+  }, [categories]);
+
   return (
     <>
       <div className="space-y-5">
@@ -427,7 +463,7 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
                   key={item.id}
                   item={item}
                   locale={locale}
-                  onDetails={() => setActive({ item, categoryId: category.id })}
+                  onDetails={() => openDetails(item, category.id)}
                 />
               ))}
             </ul>
@@ -440,7 +476,7 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
           item={active.item}
           categoryId={active.categoryId}
           locale={locale}
-          onClose={() => setActive(null)}
+          onClose={closeDetails}
         />
       ) : null}
     </>

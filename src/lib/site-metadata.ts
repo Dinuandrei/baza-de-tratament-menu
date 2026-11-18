@@ -1,15 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
-import "./globals.css";
 
-const archivo = Archivo({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-archivo",
-  display: "swap",
-});
-
-export const metadata: Metadata = {
+/**
+ * Shared by both root layouts. Per-locale titles/canonicals live in
+ * app/[lang]/page.tsx `generateMetadata`, which merges over this.
+ */
+export const baseMetadata: Metadata = {
   metadataBase: new URL("https://baza-de-tratament.vercel.app"),
   title: "#baza_de_tratament — meniu",
   description:
@@ -26,17 +21,9 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = {
+export const baseViewport: Viewport = {
   themeColor: "#08080b",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
 };
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="ro" className={archivo.variable}>
-      <body className="min-h-dvh font-sans antialiased">{children}</body>
-    </html>
-  );
-}
