@@ -204,7 +204,9 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
             </header>
 
             {category.note ? (
-              <p className="mt-2 text-xs text-muted">{category.note[locale]}</p>
+              <p className="mt-2 text-xs text-muted">
+                {category.note[locale] ?? category.note.ro}
+              </p>
             ) : null}
 
             <ul className="mt-1 divide-y divide-line/50">

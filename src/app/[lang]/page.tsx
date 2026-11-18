@@ -5,10 +5,13 @@ import { CategoryNav } from "@/components/CategoryNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Logo } from "@/components/Logo";import { MenuList } from "@/components/MenuList";
 import { ScrollProgress } from "@/components/ScrollProgress";
-import { categories } from "@/data/menu";
 import { isLocale, localeLabels, locales, t } from "@/lib/i18n";
+import { getCategories } from "@/lib/sanity";
 
 export const dynamicParams = false;
+
+// Content lives in Sanity now: revalidate instead of baking the menu in at build time.
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -46,6 +49,8 @@ export async function generateMetadata({
 export default async function MenuPage({ params }: { params: Promise<{ lang: string }> }) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
+
+  const categories = await getCategories();
 
   return (
     <div className="poster-bg min-h-dvh">

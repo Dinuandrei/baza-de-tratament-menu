@@ -25,7 +25,8 @@ export type Item = {
 export type Category = {
   id: string;
   name: Localized;
-  note?: Localized;
+  /** Same partial-fallback contract as Item.desc. */
+  note?: Partial<Localized>;
   items: Item[];
 };
 
