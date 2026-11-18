@@ -69,7 +69,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
       <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/85 backdrop-blur-md">
         {/* One row on every phone width; it only wraps when the viewport is so
             narrow (≈130% zoom) that a single row cannot fit at all. */}
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 max-[300px]:flex-wrap max-[300px]:gap-y-1 sm:gap-3 sm:py-3">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-1.5 px-3 py-2.5 max-[300px]:flex-wrap max-[300px]:gap-y-1 sm:gap-3 sm:px-4 sm:py-3">
           <Link
             href="/"
             aria-label={t.back[lang]}
@@ -85,7 +85,8 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
             <LanguageSwitcher current={lang} />
           </div>
         </div>
-        <div className="mx-auto max-w-3xl px-4 pb-2 sm:pb-2.5">
+        {/* px-3 to match the row above: the rail used to start 4px further right. */}
+        <div className="mx-auto max-w-3xl px-3 pb-2 sm:px-4 sm:pb-2.5">
           <CategoryNav categories={categories} locale={lang} />
         </div>
         <ScrollProgress />

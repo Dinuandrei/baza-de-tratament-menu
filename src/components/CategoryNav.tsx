@@ -100,7 +100,9 @@ export function CategoryNav({
   }, [categories]);
 
   return (
-    <div ref={scrollerRef} className="no-scrollbar -mx-4 overflow-x-auto px-4">
+    // The bleed must match the container padding above (px-3 on phones, px-4
+    // from sm); with -mx-4 inside px-3 the rail stuck 4px out of the page.
+    <div ref={scrollerRef} className="no-scrollbar -mx-3 overflow-x-auto px-3 sm:-mx-4 sm:px-4">
       {/* Fitts's Law: 44px tall targets, full-width rail, thumb-reachable at the top. */}
       <ul className="flex w-max gap-2 py-1">
         {categories.map((category) => {
