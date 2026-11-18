@@ -13,21 +13,28 @@ export function CategoryNav({
   locale: Locale;
 }) {
   const [active, setActive] = useState(categories[0]?.id ?? "");
-  const railRef = useRef<HTMLUListElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const chipRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const frameRef = useRef(0);
 
   // Serial Position Effect + Jakob's Law: keep the current section visible in the rail.
   useEffect(() => {
     const chip = chipRefs.current[active];
-    const rail = railRef.current;
-    if (!chip || !rail) return;
+    const scroller = scrollerRef.current;
+    if (!chip || !scroller) return;
 
-    const chipCenter = chip.offsetLeft + chip.offsetWidth / 2;
-    rail.scrollTo({
-      left: Math.max(0, chipCenter - rail.clientWidth / 2),
-      behavior: "smooth",
-    });
+    // The <ul> is `w-max`, so IT is not the scroll container — its parent is.
+    // Measure with rects (offsetLeft would be relative to the sticky header).
+    const chipRect = chip.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    const delta =
+      chipRect.left + chipRect.width / 2 - (scrollerRect.left + scrollerRect.width / 2);
+
+    if (Math.abs(delta) < 4) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    scroller.scrollBy({ left: delta, behavior: reduceMotion ? "auto" : "smooth" });
   }, [active]);
 
   /**
@@ -48,6 +55,9 @@ export function CategoryNav({
       frameRef.current = 0;
 
       const threshold = (header?.offsetHeight ?? 96) + 24;
+      // A tapped chip lands the section at exactly `threshold`; sub-pixel rounding
+      // would otherwise leave it 0.4px below and never mark it active.
+      const EPSILON = 1;
 
       // Anchor jumps must land exactly at the threshold, otherwise the section
       // you just tapped would immediately read as “not yet active”.
@@ -62,7 +72,7 @@ export function CategoryNav({
         current = sections[sections.length - 1].id;
       } else {
         for (const section of sections) {
-          if (section.getBoundingClientRect().top - threshold <= 0) {
+          if (section.getBoundingClientRect().top - threshold <= EPSILON) {
             current = section.id;
           }
         }
@@ -90,9 +100,9 @@ export function CategoryNav({
   }, [categories]);
 
   return (
-    <div className="no-scrollbar -mx-4 overflow-x-auto px-4">
+    <div ref={scrollerRef} className="no-scrollbar -mx-4 overflow-x-auto px-4">
       {/* Fitts's Law: 44px tall targets, full-width rail, thumb-reachable at the top. */}
-      <ul ref={railRef} className="flex w-max gap-2 py-1">
+      <ul className="flex w-max gap-2 py-1">
         {categories.map((category) => {
           const isActive = category.id === active;
 
