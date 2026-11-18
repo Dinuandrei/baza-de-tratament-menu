@@ -479,7 +479,10 @@ export function MenuList({ categories, locale }: { categories: Category[]; local
               <span className="text-brand">
                 <CategoryIcon id={category.id} className="h-5 w-5" />
               </span>
-              <h2 className="text-lg font-black uppercase tracking-tight text-white sm:text-xl">
+              {/* min-w-0 + overflow-wrap: as a flex child the heading keeps its
+                  min-content width, so a long uppercase name ("BĂUTURI CALDE")
+                  pushed the page sideways at 200% zoom instead of wrapping. */}
+              <h2 className="min-w-0 break-words text-lg font-black uppercase tracking-tight text-white sm:text-xl">
                 {category.name[locale]}
               </h2>
             </header>
