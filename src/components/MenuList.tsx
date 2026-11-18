@@ -93,7 +93,7 @@ function DetailsDialog({
         // Clicking the backdrop lands on the <dialog> element itself.
         if (event.target === ref.current) onClose();
       }}
-      className="product-dialog m-auto max-h-[90dvh] w-[calc(100%-2rem)] max-w-sm overflow-hidden overscroll-contain rounded-3xl border border-line bg-surface p-0 text-white shadow-2xl"
+      className="product-dialog mx-0 mb-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-hidden overscroll-contain rounded-t-3xl border border-line bg-surface p-0 text-white shadow-2xl sm:m-auto sm:w-[calc(100%-2rem)] sm:max-w-sm sm:rounded-3xl"
     >
       <div className="relative">
         {item.image ? (
@@ -101,11 +101,16 @@ function DetailsDialog({
           <img
             src={item.image}
             alt={item.name[locale]}
-            className="h-56 w-full object-cover"
+            className="h-48 w-full object-cover sm:h-56"
             loading="lazy"
           />
         ) : (
-          <ProductArt name={item.icon} categoryId={categoryId} label={item.name[locale]} className="h-56 w-full" />
+          <ProductArt
+            name={item.icon}
+            categoryId={categoryId}
+            label={item.name[locale]}
+            className="h-48 w-full sm:h-56"
+          />
         )}
 
         <button
@@ -119,7 +124,7 @@ function DetailsDialog({
         </button>
       </div>
 
-      <div className="p-5">
+      <div className="p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <div className="flex items-baseline justify-between gap-3">
           <h2 id={titleId} className="text-lg font-black leading-tight text-white">
             {item.name[locale]}
@@ -144,32 +149,35 @@ function MenuItem({
   onDetails: () => void;
 }) {
   return (
-    <li className="flex gap-3 py-3">
-      {/* pictogram: same hand-drawn line style as the poster doodles */}
-      <span className="mt-px shrink-0 text-white/45" aria-hidden>
-        <ItemIcon name={item.icon} className="h-[25px] w-[25px]" />
-      </span>
-
-      <div className="flex min-w-0 flex-1 items-baseline gap-2">
-        <p className="min-w-0 text-[15px] font-semibold leading-snug text-white/95">
-          {item.name[locale]}
-          {item.tags?.length ? <TagChips tags={item.tags} locale={locale} /> : null}
-        </p>
-
-        <span aria-hidden className="mb-1 h-px flex-1 border-b border-dotted border-line" />
-
-        <span className="flex shrink-0 flex-col items-end">
-          <Price price={item.price} locale={locale} />
-          <button
-            type="button"
-            onClick={onDetails}
-            aria-haspopup="dialog"
-            className="-my-1 mt-0.5 rounded px-1 py-1.5 text-[9px] font-bold uppercase leading-none tracking-[0.14em] text-muted underline decoration-dotted decoration-muted/60 underline-offset-2 transition-colors hover:text-brand-soft active:text-brand"
-          >
-            {t.details[locale]}
-          </button>
+    <li>
+      {/* Fitts's Law: the whole row is the target, not just the tiny label. */}
+      <button
+        type="button"
+        onClick={onDetails}
+        aria-haspopup="dialog"
+        className="flex w-full items-center gap-3 rounded-2xl px-1 py-3 text-left transition-colors hover:bg-white/[0.03] active:bg-white/[0.06]"
+      >
+        {/* pictogram: same hand-drawn line style as the poster doodles */}
+        <span className="shrink-0 text-white/45" aria-hidden>
+          <ItemIcon name={item.icon} className="h-[25px] w-[25px]" />
         </span>
-      </div>
+
+        <span className="flex min-w-0 flex-1 items-baseline gap-2">
+          <span className="min-w-0 text-[15px] font-semibold leading-snug text-white/95">
+            {item.name[locale]}
+            {item.tags?.length ? <TagChips tags={item.tags} locale={locale} /> : null}
+          </span>
+
+          <span aria-hidden className="mb-1 h-px flex-1 border-b border-dotted border-line" />
+
+          <span className="flex shrink-0 flex-col items-end">
+            <Price price={item.price} locale={locale} />
+            <span className="mt-0.5 text-[9px] font-bold uppercase leading-none tracking-[0.14em] text-muted underline decoration-dotted decoration-muted/60 underline-offset-2">
+              {t.details[locale]}
+            </span>
+          </span>
+        </span>
+      </button>
     </li>
   );
 }

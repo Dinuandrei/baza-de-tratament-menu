@@ -58,18 +58,23 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
       </a>
 
       <header className="sticky top-0 z-20 border-b border-line/80 bg-ink/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" aria-label={t.back[lang]} title={localeLabels[lang]}>
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-2.5 sm:gap-3 sm:py-3">
+          <Link
+            href="/"
+            aria-label={t.back[lang]}
+            title={localeLabels[lang]}
+            className="min-w-0 shrink"
+          >
             <Logo />
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span className="hidden text-[10px] font-bold uppercase tracking-[0.2em] text-muted sm:block">
               {t.language[lang]}
             </span>
             <LanguageSwitcher current={lang} />
           </div>
         </div>
-        <div className="mx-auto max-w-3xl px-4 pb-2.5">
+        <div className="mx-auto max-w-3xl px-4 pb-2 sm:pb-2.5">
           <CategoryNav categories={categories} locale={lang} />
         </div>
         <ScrollProgress />
@@ -82,7 +87,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
           </h1>
           <Link
             href="/"
-            className="shrink-0 rounded-full border border-line px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted transition-colors hover:border-brand/60 hover:text-white"
+            className="flex min-h-9 shrink-0 items-center rounded-full border border-line px-3 text-[10px] font-bold uppercase tracking-widest text-muted transition-colors hover:border-brand/60 hover:text-white"
           >
             {t.back[lang]}
           </Link>

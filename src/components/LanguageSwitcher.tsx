@@ -11,7 +11,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
   }, [current]);
 
   return (
-    <nav aria-label="Language" className="flex items-center gap-1">
+    <nav aria-label="Language" className="flex shrink-0 items-center gap-0.5 sm:gap-1">
       {locales.map((locale) => {
         const active = locale === current;
 
@@ -21,7 +21,7 @@ export function LanguageSwitcher({ current }: { current: Locale }) {
             href={`/${locale}`}
             hrefLang={localeHtmlLang[locale]}
             aria-current={active ? "true" : undefined}
-            className={`flex min-h-9 min-w-11 items-center justify-center rounded-full px-3 text-[11px] font-black uppercase tracking-wider transition-colors ${
+            className={`flex min-h-8 min-w-8 items-center justify-center rounded-full px-1.5 text-[10px] font-black uppercase tracking-wider transition-colors sm:min-h-9 sm:min-w-11 sm:px-3 sm:text-[11px] ${
               active
                 ? "bg-brand text-ink"
                 : "border border-line text-muted hover:border-brand/60 hover:text-white"
