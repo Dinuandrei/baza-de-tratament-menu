@@ -40,6 +40,10 @@ export function sourceHash(item: TranslatableItem): string {
  * description must not throw away a hand-corrected ingredient translation, and
  * the other way round. A field is retranslated only when its own source changed.
  */
+export function nameHash(item: TranslatableItem): string {
+  return fnv(item.name?.ro ?? "");
+}
+
 export function descriptionHash(item: TranslatableItem): string {
   return fnv(item.description?.ro ?? "");
 }

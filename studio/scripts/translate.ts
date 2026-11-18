@@ -19,6 +19,7 @@ import { BRANDS } from "../../src/lib/translate";
 import {
   descriptionHash,
   ingredientsHash,
+  nameHash,
   needsTranslation,
   sourceHash,
   TARGET_LOCALES,
@@ -63,30 +64,74 @@ type Doc = {
   name?: Partial<Record<Locale, string>>;
   description?: Partial<Record<Locale, string>>;
   ingredients?: Partial<Record<Locale, string[]>>;
+  translationSource?: {
+    _type?: string;
+    hash?: string;
+    nameHash?: string;
+    descriptionHash?: string;
+    ingredientsHash?: string;
+    at?: string;
+    provider?: string;
+    status?: string;
+  } | null;
 };
 
 type Job = {
   id: string;
   locale: Locale;
+  name?: string;
   description?: string;
   ingredients?: string[];
 };
 
+const ALL_LOCALES: Locale[] = ["ro", ...TARGET_LOCALES];
+
 const QUERY = `*[_type == "menuItem"] | order(orderRank asc) {
-  _id, name, description, ingredients
+  _id, name, description, ingredients, translationSource
 }`;
 
 async function main() {
   const docs = await client.fetch<Doc[]>(QUERY);
   console.log(`${docs.length} products, targets: ${TARGET_LOCALES.join(", ")}`);
 
+  // Names: a document that already carries a name in all four languages was
+  // either seeded with brands (identical on purpose) or translated by a human.
+  // Record a fingerprint for it instead of translating, so a rename in Studio
+  // gets translated later while the approved names stay as they are.
+  const adopt = docs.filter(
+    (doc) =>
+      !doc.translationSource?.nameHash &&
+      ALL_LOCALES.every((locale) => (doc.name?.[locale] ?? "").trim() !== ""),
+  );
+
+  if (adopt.length > 0 && !DRY_RUN) {
+    const transaction = client.transaction();
+    for (const doc of adopt) {
+      transaction.patch(doc._id, (patch) =>
+        patch.set({
+          translationSource: {
+            ...(doc.translationSource ?? {}),
+            _type: "translationSource",
+            nameHash: nameHash(doc),
+          },
+        }),
+      );
+    }
+    await transaction.commit();
+    console.log(`Name fingerprints recorded for ${adopt.length} products (no translation).`);
+  }
+
   const jobs: Job[] = [];
   for (const doc of docs) {
     for (const locale of TARGET_LOCALES) {
-      if (!needsTranslation(doc, locale)) continue;
+      const nameMissing = (doc.name?.ro ?? "").trim() !== "" && !(doc.name?.[locale] ?? "").trim();
+      if (!nameMissing && !needsTranslation(doc, locale)) continue;
       jobs.push({
         id: doc._id,
         locale,
+        // Only a genuinely empty name is translated: one that merely equals the
+        // Romanian is a brand ("Bucur Lager") and must stay untouched.
+        ...(nameMissing ? { name: doc.name?.ro } : {}),
         ...(needsTranslation({ description: doc.description }, locale)
           ? { description: doc.description?.ro }
           : {}),
@@ -102,16 +147,18 @@ async function main() {
     return;
   }
 
+  const names = jobs.filter((job) => job.name).length;
   const strings = jobs.filter((job) => job.description).length;
   const lists = jobs.filter((job) => job.ingredients).length;
   const entries = jobs.reduce((sum, job) => sum + (job.ingredients?.length ?? 0), 0);
   console.log(
-    `To translate: ${strings} descriptions, ${lists} ingredient lists (${entries} entries)`,
+    `To translate: ${names} names, ${strings} descriptions, ${lists} ingredient lists (${entries} entries)`,
   );
 
   if (DRY_RUN) {
     for (const job of jobs.slice(0, 6)) {
       console.log(`\n[dry] ${job.id} -> ${job.locale}`);
+      if (job.name) console.log(`  name: ${job.name}`);
       if (job.description) console.log(`  desc: ${job.description}`);
       if (job.ingredients) console.log(`  ing : ${job.ingredients.join(" · ")}`);
     }
@@ -128,6 +175,12 @@ async function main() {
   for (const locale of TARGET_LOCALES) {
     const localeJobs = jobs.filter((job) => job.locale === locale);
     if (localeJobs.length === 0) continue;
+
+    const named = localeJobs.filter((job) => job.name);
+    const nameResults =
+      named.length > 0
+        ? await translateTexts(named.map((job) => job.name as string), locale)
+        : [];
 
     const descriptions = localeJobs.filter((job) => job.description);
     const descriptionResults = await translateTexts(
@@ -159,6 +212,14 @@ async function main() {
     // object. Spreading a snapshot read at the start of the script would write the
     // other locale's old value back and silently undo the previous pass — that is
     // exactly what happened on the first run: sr's patch restored bg to Romanian.
+    // A name is a proper noun on a menu; models sometimes return it lowercased.
+    const capitalize = (value: string) =>
+      value.trim() === "" ? value : value.trim().charAt(0).toUpperCase() + value.trim().slice(1);
+
+    named.forEach((job, index) => {
+      touch(job.id)[`name.${locale}`] = capitalize(nameResults[index] ?? "");
+    });
+
     descriptions.forEach((job, index) => {
       touch(job.id)[`description.${locale}`] = descriptionResults[index];
     });
@@ -176,6 +237,7 @@ async function main() {
           translationSource: {
             _type: "translationSource",
             hash: sourceHash(doc ?? {}),
+            nameHash: nameHash(doc ?? {}),
             // Same per-field fingerprints the webhook uses, so a later publish
             // does not retranslate what this run already did.
             descriptionHash: descriptionHash(doc ?? {}),
