@@ -74,11 +74,20 @@ describe("middleware query handling", () => {
     assert.equal(middleware(request).kind, "next");
   });
 
-  it.todo("keeps the query string when it rewrites the path", () => {
-    // Current behaviour: /RO?x=1 → 308 to /ro and the query is dropped, because
-    // the redirect target is a bare path. Harmless for a menu, wrong for a QR
-    // campaign that carries utm_* on the uppercase URL.
-    const request = new NextRequest(`${BASE}/RO?utm_source=qr`);
-    assert.equal(new URL(middleware(request).location).search, "?utm_source=qr");
+  it("keeps the query string when it rewrites the path", () => {
+    // A printed QR code can carry utm_* on an uppercase path; dropping the search
+    // would silently lose the campaign attribution.
+    assert.equal(location(run("/RO?utm_source=qr"))
+      .search, "?utm_source=qr");
+    assert.equal(location(run("/En/?utm_source=qr&id=7")).search, "?utm_source=qr&id=7");
+    assert.equal(location(run("//bg//?a=b")).search, "?a=b");
+    // An unknown code still lands on the picker, and keeps its query too.
+    assert.equal(location(run("/xx?utm_source=qr")).pathname, "/");
+    assert.equal(location(run("/xx?utm_source=qr")).search, "?utm_source=qr");
+  });
+
+  it("adds no query string when there was none", () => {
+    assert.equal(location(run("/RO")).search, "");
+    assert.equal(location(run("/RO")).href, `${BASE}/ro`);
   });
 });

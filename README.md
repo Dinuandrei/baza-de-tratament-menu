@@ -99,16 +99,17 @@ tests/
 └── api/                   translate-product, revalidate, preview, preview/exit
 ```
 
-A few tests are marked `todo`: they assert the behaviour we *want* and currently fail, so they
-document known defects without breaking the build. `node --test` reports them as `# TODO`; grep
-for `it.todo` to see them. One is left: the middleware drops the query string when it
-canonicalises a path (`/RO?utm_source=qr` → `/ro`).
+Nothing is marked `todo` at the moment. When a test asserts behaviour we want but do not have, it
+is marked `it.todo(...)`: `node --test` reports it as `# TODO` instead of failing the run, so the
+defect is documented without breaking the build. Grep for `it.todo` to see the current list.
 
-Three defects the suite turned up are fixed and guarded by normal tests: a `null` or non-object
-JSON body answered `500` instead of `400`; the daily translation quota was charged for a publish
-that changed nothing (120 such publishes locked out real translations for a day); and a failed or
-empty translation was stored and answered `200`, so Sanity stopped retrying and a blanked field
-could never recover — the route now answers `503` and refuses to write an empty string.
+Four defects the suite turned up are fixed and guarded by normal tests: a `null` or non-object
+JSON body answered `500` instead of `400`; a non-string `_id` crashed on `id.startsWith` with a
+`500`; the daily translation quota was charged for a publish that changed nothing (120 such
+publishes locked out real translations for a day); a failed or empty translation was stored and
+answered `200`, so Sanity stopped retrying and a blanked field could never recover — the route now
+answers `503` and refuses to write an empty string; and the middleware dropped the query string
+when it canonicalised a path (`/RO?utm_source=qr` lost its `utm_*`).
 
 ## Deploy
 

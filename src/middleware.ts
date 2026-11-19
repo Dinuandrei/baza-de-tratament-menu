@@ -28,7 +28,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (target) {
-    return NextResponse.redirect(new URL(target, request.url), 308);
+    // Carry the query string over: `/RO?utm_source=qr` arrives from a printed QR
+    // code, and `new URL(target, request.url)` on a bare path would drop it.
+    const url = new URL(target, request.url);
+    url.search = request.nextUrl.search;
+    return NextResponse.redirect(url, 308);
   }
 
   return NextResponse.next();
