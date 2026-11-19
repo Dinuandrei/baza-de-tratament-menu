@@ -79,6 +79,37 @@ cd studio && npm install && npm run dev   # http://localhost:3333
 Copy `.env.example` to `.env.local` and fill in the tokens. `npm run build` pre-renders all four
 locales; the menu itself is fetched from Sanity at request time (ISR, 60 s safety net).
 
+## Backend tests
+
+The API routes, the rate limiters, the secret comparison and both translation adapters run
+under Node's own test runner — no browser, no Sanity project, no provider key. Next, Sanity and
+`fetch` are replaced at the module boundary by `tests/stubs/`, so the handlers under test are the
+production ones, unmodified.
+
+```bash
+npm test                                        # the whole backend suite
+node --import ./tests/hooks.mjs --test tests/api/translate-product.test.mjs   # one file
+```
+
+```
+tests/
+├── hooks.mjs              resolve hooks: @/ → src, next/* → stubs, @sanity/client → fake
+├── stubs/                 NextResponse, draftMode, revalidatePath, in-memory Sanity client
+├── unit/                  secrets, rate limits, fingerprints, i18n, middleware, providers
+└── api/                   translate-product, revalidate, preview, preview/exit
+```
+
+A few tests are marked `todo`: they assert the behaviour we *want* and currently fail, so they
+document known defects without breaking the build. `node --test` reports them as `# TODO`; grep
+for `it.todo` to see them. One is left: the middleware drops the query string when it
+canonicalises a path (`/RO?utm_source=qr` → `/ro`).
+
+Three defects the suite turned up are fixed and guarded by normal tests: a `null` or non-object
+JSON body answered `500` instead of `400`; the daily translation quota was charged for a publish
+that changed nothing (120 such publishes locked out real translations for a day); and a failed or
+empty translation was stored and answered `200`, so Sanity stopped retrying and a blanked field
+could never recover — the route now answers `503` and refuses to write an empty string.
+
 ## Deploy
 
 Hosted on Vercel; pushing to `main` is enough. Required environment variables are listed in

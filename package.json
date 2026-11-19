@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --import ./tests/hooks.mjs --test \"tests/**/*.test.mjs\""
   },
   "dependencies": {
     "@sanity/client": "^8.16.0",
