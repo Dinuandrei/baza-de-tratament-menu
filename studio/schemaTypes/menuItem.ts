@@ -63,8 +63,8 @@ export default defineType({
       name: 'price',
       title: 'Preț (lei)',
       type: 'number',
-      description: 'Lasă gol dacă prețul nu este fix — în meniu apare „—”.',
-      validation: (Rule) => Rule.positive(),
+      description: 'Lasă gol dacă prețul nu este fix — în meniu apare „—”. 0 este permis (ex. apă din partea casei).',
+      validation: (Rule) => Rule.min(0),
     }),
     defineField({
       name: 'tags',

@@ -1,7 +1,28 @@
 import { createClient } from "@sanity/client";
-import { translateTexts } from "@/lib/translate-gemini";
+import { clientKey, takeBurst, takeDaily } from "@/lib/rate-limit";
+import { revalidateMenu } from "@/lib/revalidate";
 import { descriptionHash, ingredientsHash, nameHash, sourceHash } from "@/lib/translation-source";
+import { isAuthorizedWebhook, webhookSecrets } from "@/lib/webhook-secret";
 import type { Locale } from "@/lib/i18n";
+
+/**
+ * Same provider choice as studio/scripts/translate.ts: Azure when a key is set,
+ * Gemini otherwise. Hardcoding Gemini here made the documented Azure setup fail
+ * with “GOOGLE_API_KEY is not set” on the first publish.
+ */
+type TranslateFn = (texts: string[], to: string, from?: string) => Promise<string[]>;
+
+async function loadTranslator(): Promise<{ translate: TranslateFn; provider: string }> {
+  if (process.env.AZURE_TRANSLATOR_KEY) {
+    const { translateTexts } = await import("@/lib/translate");
+    return { translate: translateTexts, provider: "azure" };
+  }
+  const { translateTexts } = await import("@/lib/translate-gemini");
+  return {
+    translate: translateTexts as (texts: string[], to: string, from?: string) => Promise<string[]>,
+    provider: "gemini",
+  };
+}
 
 /**
  * Translates a product into the other three languages when it is published.
@@ -10,12 +31,17 @@ import type { Locale } from "@/lib/i18n";
  *   Gemini → patch the same document
  *
  * Three things keep this safe:
- *  - a shared secret header, checked before anything else costs money;
+ *  - a shared secret header plus two rate-limit layers (burst before the secret
+ *    is even compared, and a global daily cap) so a leaked secret cannot burn
+ *    the translation quota;
  *  - an idempotency fingerprint: the patch stores a hash of the Romanian source,
  *    and a run whose hash matches writes nothing. Our own write triggers another
  *    webhook, that one matches and stops — the loop terminates by construction;
  *  - writes by PATH ("description.bg"), never by re-sending the whole object, so
  *    a concurrent edit in the Studio cannot be reverted by a stale copy.
+ *
+ * After a successful write the menu pages are revalidated on demand, so a
+ * translation lands in seconds rather than on the next 60 s ISR tick.
  */
 
 export const maxDuration = 60;
@@ -53,16 +79,32 @@ function capitalized(value: string): string {
   return trimmed === "" ? trimmed : trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 }
 
-function json(body: unknown, status = 200) {
-  return Response.json(body, { status, headers: { "cache-control": "no-store" } });
+function json(body: unknown, status = 200, headers: Record<string, string> = {}) {
+  return Response.json(body, {
+    status,
+    headers: { "cache-control": "no-store", ...headers },
+  });
 }
 
+const BURST_MAX = 12;
+const BURST_WINDOW_MS = 60_000;
+const DAILY_MAX = 120;
+
 export async function POST(request: Request) {
-  const secret = process.env.TRANSLATE_WEBHOOK_SECRET;
-  if (!secret) {
+  // Before the secret check: a caller that hammers the URL never gets to guess.
+  const burst = takeBurst(`translate:${clientKey(request)}`, BURST_MAX, BURST_WINDOW_MS);
+  if (!burst.ok) {
+    return json(
+      { ok: false, error: "too many requests" },
+      429,
+      { "retry-after": String(burst.retryAfter) },
+    );
+  }
+
+  if (webhookSecrets().length === 0) {
     return json({ ok: false, error: "TRANSLATE_WEBHOOK_SECRET is not configured" }, 500);
   }
-  if (request.headers.get("x-webhook-secret") !== secret) {
+  if (!isAuthorizedWebhook(request)) {
     return json({ ok: false, error: "unauthorized" }, 401);
   }
 
@@ -83,6 +125,25 @@ export async function POST(request: Request) {
 
   // Drafts are the editor typing; only published documents are translated.
   if (id.startsWith("drafts.")) return json({ ok: true, skipped: "draft" });
+
+  const writer = createClient({
+    projectId,
+    dataset,
+    apiVersion: "2024-03-27",
+    useCdn: false,
+    token,
+  });
+
+  // Global cap shared by every instance: 120 translated publishes per day is far
+  // above a real menu's edit rate, but bounds the cost of a leaked secret.
+  const daily = await takeDaily(writer, "translate", DAILY_MAX);
+  if (!daily.ok) {
+    return json(
+      { ok: false, error: "daily translation limit reached" },
+      429,
+      { "retry-after": String(daily.retryAfter) },
+    );
+  }
 
   const doc = await readClient.fetch<Doc | null>(
     `*[_id == $id][0]{_id, name, description, ingredients, translationSource}`,
@@ -126,13 +187,7 @@ export async function POST(request: Request) {
     return json({ ok: true, skipped: "already translated", hash });
   }
 
-  const writer = createClient({
-    projectId,
-    dataset,
-    apiVersion: "2024-03-27",
-    useCdn: false,
-    token,
-  });
+  const { translate: translateTexts, provider } = await loadTranslator();
 
   const patch: Record<string, unknown> = {};
   const failures: string[] = [];
@@ -195,7 +250,7 @@ export async function POST(request: Request) {
     descriptionHash: complete && descriptionStale ? currentDescriptionHash : (stored?.descriptionHash ?? ""),
     ingredientsHash: complete && ingredientsStale ? currentIngredientsHash : (stored?.ingredientsHash ?? ""),
     at: new Date().toISOString(),
-    provider: "gemini",
+    provider,
     status: complete ? "ok" : failures.join(" | ").slice(0, 200),
   };
 
@@ -203,6 +258,15 @@ export async function POST(request: Request) {
   // with an async commit it would read the document before the fingerprints
   // landed and translate everything a second time.
   await writer.patch(id).set(patch).commit({ visibility: "sync" });
+
+  // Push the fresh text to the cached pages immediately: the next visitor sees
+  // the translation instead of waiting for the 60 s ISR window. Route Handlers
+  // defer the regeneration to the next visit, which is what we want here.
+  try {
+    revalidateMenu();
+  } catch (error) {
+    console.warn("[translate] revalidate failed", error);
+  }
 
   return json({
     ok: complete,

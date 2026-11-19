@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CategoryNav } from "@/components/CategoryNav";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { Logo } from "@/components/Logo";import { MenuList } from "@/components/MenuList";
+import { Logo } from "@/components/Logo";
+import { MenuList } from "@/components/MenuList";
+import { PreviewBanner } from "@/components/PreviewBanner";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { isLocale, localeLabels, locales, t } from "@/lib/i18n";
 import { getCategories } from "@/lib/sanity";
@@ -58,6 +60,7 @@ export default async function MenuPage({ params }: { params: Promise<{ lang: str
 
   return (
     <div className="poster-bg min-h-dvh">
+      <PreviewBanner lang={lang} />
       {/* Paradox of the Active User: no manual, no onboarding — jump straight to the list. */}
       <a
         href="#meniu"

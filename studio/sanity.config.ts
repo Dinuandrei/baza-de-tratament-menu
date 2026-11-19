@@ -3,6 +3,7 @@ import {structureTool} from 'sanity/structure'
 import {visionTool} from '@sanity/vision'
 import {orderableDocumentListDeskItem} from '@sanity/orderable-document-list'
 import {schemaTypes} from './schemaTypes'
+import {withPreviewAction} from './actions/preview'
 
 export default defineConfig({
   name: 'baza-de-tratament',
@@ -71,5 +72,15 @@ export default defineConfig({
 
   schema: {
     types: schemaTypes,
+  },
+
+  document: {
+    // A “Previzualizează” action on the content types that have a page, so the
+    // owner can check a draft before pressing Publish. Hidden when the Studio
+    // env does not carry SANITY_STUDIO_PREVIEW_URL/SECRET.
+    actions: (prev, context) =>
+      context.schemaType === 'menuItem' || context.schemaType === 'category'
+        ? withPreviewAction(prev)
+        : prev,
   },
 })

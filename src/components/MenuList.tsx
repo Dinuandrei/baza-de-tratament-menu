@@ -292,10 +292,11 @@ function DetailsDialog({
         {item.image ? (
           // eslint-disable-next-line @next/next/no-img-element -- Sanity/remote images arrive in the next step
           <img
-            src={item.image}
+            src={`${item.image}?w=900&auto=format&q=78`}
             alt={item.name[locale]}
             className="h-48 max-h-[38dvh] w-full object-cover sm:h-56"
             loading="lazy"
+            decoding="async"
           />
         ) : (
           <ProductArt
