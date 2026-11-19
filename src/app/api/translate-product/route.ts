@@ -113,15 +113,25 @@ export async function POST(request: Request) {
     return json({ ok: false, error: "SANITY_WRITE_TOKEN is not configured" }, 500);
   }
 
-  let payload: { _id?: string };
+  // `null`, a string, a number and an array are all valid JSON, and the webhook
+  // body is not trusted to be the object Sanity sends: `null` used to reach
+  // `payload._id` and turn a 400 into a 500.
+  let payload: unknown;
   try {
-    payload = (await request.json()) as { _id?: string };
+    payload = await request.json();
   } catch {
     return json({ ok: false, error: "body is not JSON" }, 400);
   }
 
-  const id = payload._id;
+  if (typeof payload !== "object" || payload === null) {
+    return json({ ok: false, error: "body is not a JSON object" }, 400);
+  }
+
+  const id = (payload as { _id?: unknown })._id;
   if (!id) return json({ ok: false, error: "missing _id" }, 400);
+  // `id.startsWith` on a number threw a TypeError and answered 500, which Sanity
+  // reads as "the endpoint is broken" and retries.
+  if (typeof id !== "string") return json({ ok: false, error: "invalid _id" }, 400);
 
   // Drafts are the editor typing; only published documents are translated.
   if (id.startsWith("drafts.")) return json({ ok: true, skipped: "draft" });
@@ -133,17 +143,6 @@ export async function POST(request: Request) {
     useCdn: false,
     token,
   });
-
-  // Global cap shared by every instance: 120 translated publishes per day is far
-  // above a real menu's edit rate, but bounds the cost of a leaked secret.
-  const daily = await takeDaily(writer, "translate", DAILY_MAX);
-  if (!daily.ok) {
-    return json(
-      { ok: false, error: "daily translation limit reached" },
-      429,
-      { "retry-after": String(daily.retryAfter) },
-    );
-  }
 
   const doc = await readClient.fetch<Doc | null>(
     `*[_id == $id][0]{_id, name, description, ingredients, translationSource}`,
@@ -187,6 +186,19 @@ export async function POST(request: Request) {
     return json({ ok: true, skipped: "already translated", hash });
   }
 
+  // Global cap shared by every instance: 120 translated publishes per day is far
+  // above a real menu's edit rate, but bounds the cost of a leaked secret. Charged
+  // only once a run will really call the provider: a publish that changes a price
+  // (or comes back as our own echo) must not spend the day's budget.
+  const daily = await takeDaily(writer, "translate", DAILY_MAX);
+  if (!daily.ok) {
+    return json(
+      { ok: false, error: "daily translation limit reached" },
+      429,
+      { "retry-after": String(daily.retryAfter) },
+    );
+  }
+
   const { translate: translateTexts, provider } = await loadTranslator();
 
   const patch: Record<string, unknown> = {};
@@ -222,6 +234,13 @@ export async function POST(request: Request) {
       // A short or long reply would shift every value onto the wrong field.
       if (translated.length !== input.length) {
         throw new Error(`expected ${input.length} strings, got ${translated.length}`);
+      }
+
+      // An empty string is not a translation. Writing one would blank a finished
+      // field and stamp the fingerprint as done, so the gap could never be
+      // retried; treat the locale as failed and let the next publish try again.
+      if (translated.some((value) => value.trim() === "")) {
+        throw new Error("provider returned an empty translation");
       }
 
       let cursor = 0;
@@ -268,10 +287,16 @@ export async function POST(request: Request) {
     console.warn("[translate] revalidate failed", error);
   }
 
-  return json({
-    ok: complete,
-    id,
-    translated: Object.keys(patch).filter((key) => key !== "translationSource"),
-    ...(failures.length > 0 ? { failures } : {}),
-  });
+  return json(
+    {
+      ok: complete,
+      id,
+      translated: Object.keys(patch).filter((key) => key !== "translationSource"),
+      ...(failures.length > 0 ? { failures } : {}),
+    },
+    // A partial run must not look like success: Sanity reads a 2xx as "delivered"
+    // and stops retrying, leaving the failed locale untranslated until somebody
+    // edits the product again.
+    complete ? 200 : 503,
+  );
 }

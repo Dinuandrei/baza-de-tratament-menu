@@ -129,7 +129,13 @@ async function requestChunk(texts: string[], from: string, to: string): Promise<
       if (data.length !== texts.length) {
         throw new Error(`Azure returned ${data.length} results for ${texts.length} inputs`);
       }
-      return data.map((entry) => unmask(entry.translations[0]?.text ?? ""));
+      const translations = data.map((entry) => unmask(entry.translations[0]?.text ?? ""));
+      // The service answers 200 with a missing `translations` entry when it cannot
+      // handle a fragment. Returning "" here would blank a finished field.
+      if (translations.some((text) => text.trim() === "")) {
+        throw new Error(`Azure returned an empty translation for ${texts.length} inputs`);
+      }
+      return translations;
     }
 
     // 429 means the free tier is throttling us; 5xx is worth another try.
